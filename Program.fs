@@ -4,6 +4,7 @@ open System
 open Ray
 open Vector
 open Sphere
+open Plane
 open Image
 open Scene
 
@@ -13,15 +14,15 @@ let normalToColour = function
 
 [<EntryPoint>]
 let main argv =
-    let sph = sphere (Point (0.0,0.0,10.0)) 4.0
     let s = Scene [
-                  sph
+                  sphere (Point (0.0,0.0,10.0)) 4.0;
+                  plane (Point (0.0,0.0,0.0)) (Vector (0.0,1.0,0.0))
                   ]
 
-    let resolution = Resolution (100, 100)
-    let c = { o = Point (0.0, 0.0, 0.0); up = Vector (0.0, 1.0, 0.0); lookAt = Point (0.0, 0.0, 1.0); fovY = System.Math.PI / 3.5; aspectRatio = 1.0 }
+    let resolution = Resolution (400, 400)
+    let c = { o = Point (0.0, 1.0, 0.0); up = Vector (0.0, 1.0, 0.0); lookAt = Point (0.0, 0.0, 1.0); fovY = System.Math.PI / 2.0; aspectRatio = 1.0 }
     let rays = generateRays c resolution
-    let intersections = rays |> Seq.map (intersect sph >> closest)
+    let intersections = rays |> Seq.map (intersectScene s)
     let pixels = Seq.map normalToColour intersections
     let b = { resolution = resolution; pixels = Seq.toList pixels }
     write b "test.ppm"

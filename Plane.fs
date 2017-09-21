@@ -21,3 +21,5 @@ type Plane(p0 : Point, n : Vector) =
                 seq [ { t = t; p = addP r.o (mulV t r.d); n = this.N } ]
             else
                 Seq.empty
+
+let plane p0 n = Plane(p0, n)
