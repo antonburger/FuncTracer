@@ -35,36 +35,45 @@ let fromCamera c =
     let j = cross k i
     { i = i; j = j; k = k }
 
-type PixelGrid = {
-    centre: Point;
+type ImagePlane = {
+    origin: Point;
+    originToCentre: Vector;
     i: Vector;
     j: Vector;
     resolution: Resolution;
     pixelSize: float * float;
-    pixelCentres: (float * float) [,];
+    topLeft: float * float;
 }
 
-let createGrid camera resolution =
+let createPlane camera resolution =
     let frame = fromCamera camera
     let ahead = addP camera.o frame.k
     let halfY = System.Math.Tan(camera.fovY / 2.0)
     let halfX = halfY * camera.aspectRatio
     let incY = (halfY * 2.0) / (resH resolution - 1 |> float)
     let incX = (halfX * 2.0) / (resV resolution - 1 |> float)
-    let offsets = Array2D.init (resH resolution) (resV resolution) (fun y x ->
-        (-halfX + float x * incX + incX / 2.0, halfY - float y * incY - incY / 2.0))
     {
-        centre = ahead;
+        origin = camera.o;
+        originToCentre = frame.k;
         i = frame.i;
         j = frame.j;
         resolution = resolution;
         pixelSize = (incX, incY)
-        pixelCentres = offsets
+        topLeft = (-halfX + incX / 2.0, halfY - incY / 2.0)
     }
 
+let rayThroughPixel imagePlane (pixel : int * int) (jitter : float * float) =
+    let (cx, cy) = (fst imagePlane.topLeft + float (fst pixel) * fst imagePlane.pixelSize, snd imagePlane.topLeft - float (snd pixel) * snd imagePlane.pixelSize)
+    let (jx, jy) = (cx + fst jitter * fst imagePlane.pixelSize, cy + snd jitter * snd imagePlane.pixelSize)
+    let via = addV imagePlane.originToCentre << addV (mulV jx imagePlane.i) <| mulV jy imagePlane.j
+    { o = imagePlane.origin; d = via }
+
 let generateRays camera resolution =
-    let pixelGrid = createGrid camera resolution
-    let rays = Seq.map (fun (x, y) ->
-        let via = addP (addP pixelGrid.centre (mulV x pixelGrid.i)) (mulV y pixelGrid.j)
-        { o = camera.o; d = subP via camera.o }) (pixelGrid.pixelCentres |> Seq.cast<float * float>)
-    rays
+    let imagePlane = createPlane camera resolution
+    let coords = seq { for y in 0..(resV resolution - 1) do for x in 0..(resH resolution - 1) -> (x, y) }
+    // let getRays coord = List.singleton <| rayThroughPixel imagePlane coord
+    let random = System.Random()
+    let getRays coord =
+        let jitters = List.init 16 (fun _ -> (random.NextDouble() - 0.5, random.NextDouble() - 0.5))
+        List.map (fun jitter -> rayThroughPixel imagePlane coord jitter) jitters
+    Seq.map (fun coord -> (coord, getRays coord)) coords
