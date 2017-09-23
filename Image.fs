@@ -27,9 +27,10 @@ let write b fn =
     writePixels b.pixels
 
 let generateRays camera resolution =
-    let up = normalise camera.up
+    // Camera's a left-handed coordinate system (+x right, +y up, +z forward). So right = up x forward rather than forward x up.
     let forward = subP camera.lookAt camera.o |> normalise
-    let right = cross forward up |> normalise
+    let right = cross camera.up forward |> normalise
+    let up = cross forward right |> normalise
     let ahead = addP camera.o forward
     let halfY = System.Math.Tan(camera.fovY / 2.0)
     let halfX = halfY * camera.aspectRatio
