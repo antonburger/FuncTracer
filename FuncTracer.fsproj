@@ -11,8 +11,8 @@
     <Compile Include="Vector.fs" />
     <Compile Include="Sphere.fs" />
     <Compile Include="Plane.fs" />
-    <Compile Include="Scene.fs" />
     <Compile Include="Image.fs" />
+    <Compile Include="Scene.fs" />
     <Compile Include="Shading.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

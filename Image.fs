@@ -8,6 +8,17 @@ type Camera = { o: Point; lookAt: Point; up: Vector; fovY: float; aspectRatio: f
 
 type Colour = Colour of (byte * byte * byte)
 
+let clamp x = 
+        match x with
+            | _ when x > 255.0 -> 255uy
+            | _ when x<0.0     -> 0uy
+            | _                -> (byte) x
+let scaleColour intensity (Colour(r,g,b)) =  
+    Colour(
+        clamp ((float)r*intensity),
+        clamp ((float)g*intensity),
+        clamp ((float)b*intensity));
+
 type Resolution = Resolution of (int * int)
 
 type Bitmap = { resolution: Resolution; pixels : Colour list }

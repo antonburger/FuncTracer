@@ -23,8 +23,8 @@ let shade shader scene (pixelRays : seq<(int * int) * Ray list>) =
 let main argv =
     let shader = shadeOrBackground white directionalLightShader
     let s = Scene [
-                  sphere (Point (0.0,0.0,10.0)) 4.0;
-                  sphere (Point (1.0,3.0,10.0)) 4.0;
+                  SceneObject(sphere (Point (0.0,0.0,10.0)) 4.0, { colour = red });
+                  SceneObject(sphere (Point (1.0,3.0,10.0)) 4.0, { colour = blue })
                 //   plane (Point (0.0,0.0,0.0)) (Vector (0.0,1.0,0.0))
                   ]
 
