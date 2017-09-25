@@ -4,6 +4,8 @@ open System.IO
 open Ray
 open Vector
 
+type Camera = { o: Point; lookAt: Point; up: Vector; fovY: float; aspectRatio: float }
+
 type Colour = Colour of (byte * byte * byte)
 
 type Resolution = Resolution of (int * int)
@@ -47,19 +49,18 @@ type ImagePlane = {
 
 let createPlane camera resolution =
     let frame = fromCamera camera
-    let ahead = camera.o + frame.k
-    let halfY = System.Math.Tan(camera.fovY / 2.0)
-    let halfX = halfY * camera.aspectRatio
-    let incY = (halfY * 2.0) / (resH resolution - 1 |> float)
-    let incX = (halfX * 2.0) / (resV resolution - 1 |> float)
+    let height = tan (camera.fovY / 2.0) * 2.0
+    let width = height * camera.aspectRatio
+    let pixelHeight = height / (resH resolution - 1 |> float)
+    let pixelWidth = width / (resV resolution - 1 |> float)
     {
         origin = camera.o;
         originToCentre = frame.k;
         i = frame.i;
         j = frame.j;
         resolution = resolution;
-        pixelSize = (incX, incY)
-        topLeft = (-halfX + incX / 2.0, halfY - incY / 2.0)
+        pixelSize = (pixelWidth, pixelHeight)
+        topLeft = (-width / 2.0 + pixelWidth / 2.0, height / 2.0 - pixelHeight / 2.0)
     }
 
 let rayThroughPixel imagePlane (pixel : int * int) (jitter : float * float) =

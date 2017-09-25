@@ -2,8 +2,6 @@ module Ray
 
 type Ray = { o: Point; d: Vector }
 
-type Camera = { o: Point; lookAt: Point; up: Vector; fovY: float; aspectRatio: float }
-
 type RayIntersection = { t: float; p: Point; n: Vector }
 
 type Intersectable =
