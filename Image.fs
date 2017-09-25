@@ -30,9 +30,9 @@ type Frame = { i : Vector; j : Vector; k : Vector }
 
 let fromCamera c =
     // Camera's a left-handed coordinate system (+x right, +y up, +z forward). So right = up x forward rather than forward x up.
-    let k = subP c.lookAt c.o |> normalise
-    let i = cross c.up k |> normalise
-    let j = cross k i
+    let k = c.lookAt - c.o |> normalise
+    let i = c.up .** k |> normalise
+    let j = k .** i
     { i = i; j = j; k = k }
 
 type ImagePlane = {
@@ -47,7 +47,7 @@ type ImagePlane = {
 
 let createPlane camera resolution =
     let frame = fromCamera camera
-    let ahead = addP camera.o frame.k
+    let ahead = camera.o + frame.k
     let halfY = System.Math.Tan(camera.fovY / 2.0)
     let halfX = halfY * camera.aspectRatio
     let incY = (halfY * 2.0) / (resH resolution - 1 |> float)
@@ -65,7 +65,7 @@ let createPlane camera resolution =
 let rayThroughPixel imagePlane (pixel : int * int) (jitter : float * float) =
     let (cx, cy) = (fst imagePlane.topLeft + float (fst pixel) * fst imagePlane.pixelSize, snd imagePlane.topLeft - float (snd pixel) * snd imagePlane.pixelSize)
     let (jx, jy) = (cx + fst jitter * fst imagePlane.pixelSize, cy + snd jitter * snd imagePlane.pixelSize)
-    let via = addV imagePlane.originToCentre << addV (mulV jx imagePlane.i) <| mulV jy imagePlane.j
+    let via = imagePlane.originToCentre + jx * imagePlane.i + jy * imagePlane.j
     { o = imagePlane.origin; d = via }
 
 let generateRays camera resolution =

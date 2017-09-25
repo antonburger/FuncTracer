@@ -19,8 +19,8 @@ type Sphere(centre: Point, radius: float) =
                 let sq = sqrt discriminant
                 let twoa = 2.0 * a
                 let intersection t =
-                    let p = addP r.o (mulV t r.d)
-                    { t = t; p = p; n = (subP p this.Centre) |> normalise }
+                    let p = r.o + t * r.d
+                    { t = t; p = p; n = p - this.Centre |> normalise }
                 seq [ (-b + sq) / twoa; (-b - sq) / twoa ] |>
                 Seq.map intersection
 

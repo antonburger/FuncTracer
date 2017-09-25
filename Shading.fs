@@ -20,7 +20,7 @@ let normalToColourShader { n = Vector (x,y,z) } =
     let remap c = (c + 1.0) / 2.0 * 255.0 |> byte in Colour (remap x, remap y, remap z)
 
 let directionalLightShader { n = normal } =
-    let lightDirection = Vector(1.0, -1.0, 3.0) |> negV |> normalise
-    let intensity = clamp (dot lightDirection normal * 255.0)
+    let lightDirection = -Vector(1.0, -1.0, 3.0) |> normalise
+    let intensity = clamp (lightDirection .* normal * 255.0)
     Colour(intensity, intensity, intensity);
 

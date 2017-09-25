@@ -1,9 +1,5 @@
 module Ray
 
-type Point = Point of (float * float * float)
-
-type Vector = Vector of (float * float * float)
-
 type Ray = { o: Point; d: Vector }
 
 type Camera = { o: Point; lookAt: Point; up: Vector; fovY: float; aspectRatio: float }
