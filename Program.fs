@@ -4,32 +4,31 @@ open Ray
 open Vector
 open Sphere
 open Plane
+open Light
 open Image
 open Scene
 open Shading
 
-
-let shade shader scene (pixelRays : seq<(int * int) * Ray list>) =
-    let shadePixel (rays : Ray list) =
-        rays |>
-        Seq.map (intersectScene scene >> shader) |>
-        Seq.fold (+) Colour.black |>
-        Colour.map (fun c -> c / float rays.Length)
-    Seq.map (fun pixelRay -> async { return (fst pixelRay, shadePixel <| snd pixelRay) }) pixelRays |> Async.Parallel |> Async.RunSynchronously
-
 [<EntryPoint>]
 let main argv =
-    let shader = shadeOrBackground Colour.white directionalLightShader
-    let s = Scene [
-                  SceneObject(sphere (Point (0.0,0.0,10.0)) 4.0, { colour = Colour.red });
-                  SceneObject(sphere (Point (1.0,3.0,10.0)) 4.0, { colour = Colour.blue })
-                //   plane (Point (0.0,0.0,0.0)) (Vector (0.0,1.0,0.0))
-                  ]
+    let scene = {
+        objects = [
+                  SceneObject(sphere (Point (-3.0,0.0,10.0)) 3.0, { colour = Colour.red });
+                  SceneObject(sphere (Point (3.0,0.0,7.0)) 3.0, { colour = Colour.blue });
+                  SceneObject(sphere (Point (1.0,3.0,4.0)) 1.0, { colour = Colour.greyScale 0.8 });
+                  SceneObject(plane (Point (0.0,-3.0,0.0)) (Vector (0.0,1.0,0.0)), { colour = Colour.fromRGB 1 1 0 });
+                  ];
+        lights =  [
+                  // BUG: Have to ensure that light vectors are normalised beforehand.
+                  (DirectionalLight (Vector (1.0, -3.0, 3.0) |> normalise), Colour.white);
+                  (DirectionalLight (Vector (-3.0, -2.0, 3.0) |> normalise), Colour.white);
+                  ];
+    }
 
     let resolution = Resolution (400, 400)
     let c = { o = Point (0.0, 0.0, 0.0); up = Vector (0.0, 1.0, 0.0); lookAt = Point (0.0, 0.0, 1.0); fovY = System.Math.PI / 2.0; aspectRatio = 1.0 }
     let pixelRays = generateRays c resolution
-    let pixels = shade shader s pixelRays
+    let pixels = shade scene pixelRays
     let b = { resolution = resolution; pixels = Seq.toList << Seq.map snd <| pixels }
     write b "test.ppm"
     0

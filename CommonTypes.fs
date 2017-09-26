@@ -29,6 +29,8 @@ type Point = Point of (float * float * float) with
 type Colour = Colour of (float * float * float) with
     static member (+) (Colour (r1, g1, b1), Colour (r2, g2, b2)) =
         Colour (r1 + r2, g1 + g2, b1 + b2)
+    static member (*) (Colour (r1, g1, b1), Colour (r2, g2, b2)) =
+        Colour (r1 * r2, g1 * g2, b1 * b2)
 
 module Vector =
     let toPoint (Vector (x, y, z)) =

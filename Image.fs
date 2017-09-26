@@ -81,7 +81,8 @@ let generateRays camera resolution =
     let coords = seq { for y in 0..(resV resolution - 1) do for x in 0..(resH resolution - 1) -> (x, y) }
     // let getRays coord = List.singleton <| rayThroughPixel imagePlane coord
     let random = System.Random()
+    let samplesPerPixel = 10
     let getRays coord =
-        let jitters = List.init 16 (fun _ -> (random.NextDouble() - 0.5, random.NextDouble() - 0.5))
+        let jitters = List.init samplesPerPixel (fun _ -> (random.NextDouble() - 0.5, random.NextDouble() - 0.5))
         List.map (fun jitter -> rayThroughPixel imagePlane coord jitter) jitters
     Seq.map (fun coord -> (coord, getRays coord)) coords

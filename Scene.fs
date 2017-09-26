@@ -1,4 +1,6 @@
 module Scene
+
+open Light
 open Ray
 open Image
 
@@ -9,7 +11,10 @@ type SceneObject(geometry: Intersectable, material: Material) =
     interface Intersectable with
         member this.Intersect r = this.Geometry.Intersect r
 
-type Scene = Scene of SceneObject list
+type Scene = {
+    objects: SceneObject list;
+    lights: Light list;
+}
 type IntersectedObject = { intersection: RayIntersection; sceneObject: SceneObject }
 
 let closest intersections =
@@ -21,9 +26,16 @@ let closest intersections =
         then None
         else Some <| Seq.head candidates
 
-let intersectScene (Scene objects) r =
+let intersectScene ({ objects = objects }) r =
     let flip f = fun x y -> f y x
     objects |> Seq.collect ( 
                 fun obj -> flip intersect r obj 
                         |> Seq.map(fun v->{intersection=v; sceneObject=obj})
         ) |> closest
+
+// Just look for *an* intersection. Not interested in the closest one.
+let intersectsAny ({ objects = objects }) r =
+    let flip f = fun x y -> f y x
+    objects |>
+    Seq.collect (flip intersect r) |>
+    Seq.exists (fun i -> i.t >= 0.0)
