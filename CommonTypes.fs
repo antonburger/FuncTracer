@@ -33,6 +33,12 @@ type Colour = Colour of (float * float * float) with
         Colour (r1 * r2, g1 * g2, b1 * b2)
 
 module Vector =
+    let normalise (v : Vector) =
+        let l = v.Length
+        if l < 0.0000001
+            then v
+            else (1.0/l) * v
+
     let toPoint (Vector (x, y, z)) =
         Point (x, y, z)
 

@@ -9,7 +9,6 @@
     <Compile Include="CommonTypes.fs" />
     <Compile Include="Light.fs" />
     <Compile Include="Ray.fs" />
-    <Compile Include="Vector.fs" />
     <Compile Include="Sphere.fs" />
     <Compile Include="Plane.fs" />
     <Compile Include="Image.fs" />
