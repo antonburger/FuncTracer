@@ -14,7 +14,7 @@ let directional direction colour =
     Light (normalise direction |> DirectionalLight, colour)
 
 let softDirectional direction samples scattering colour =
-    Light (SoftDirectionalLight (direction, samples, scattering), colour)
+    Light (SoftDirectionalLight (normalise direction, samples, scattering), colour)
 
 let (|Directional|SoftDirectional|) lightConfiguration =
     match lightConfiguration with
