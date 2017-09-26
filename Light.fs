@@ -6,7 +6,7 @@ type LightConfiguration =
     // Constructors are private so that constructor functions can normalise vectors, etc.
     private
     | DirectionalLight of direction : Vector
-    | SoftDirectionalLight of direction:Vector * samples:int * scattering:float
+    | SoftDirectionalLight of direction:Vector * samples:int * scattering:float<rad>
 
 type Light = Light of LightConfiguration * Colour
 

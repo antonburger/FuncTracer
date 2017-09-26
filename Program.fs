@@ -19,8 +19,8 @@ let main argv =
                   SceneObject(plane (Point (0.0,-3.0,0.0)) (Vector (0.0,1.0,0.0)), { colour = Colour.fromRGB 1 1 0 });
                   ];
         lights =  [
-                  softDirectional (Vector (1.0, -3.0, 3.0)) 8 (System.Math.PI/5.0) Colour.white;
-                  softDirectional (Vector (-3.0, -2.0, 3.0)) 8 (System.Math.PI /5.0) Colour.white;
+                  softDirectional (Vector (1.0, -3.0, 3.0)) 8 (Deg.toRad 36.0<deg>) Colour.white;
+                  softDirectional (Vector (-3.0, -2.0, 3.0)) 8 (Deg.toRad 36.0<deg>) Colour.white;
                   ];
     }
 

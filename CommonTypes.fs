@@ -46,10 +46,10 @@ module Vector =
         Point (x, y, z)
 
 
-    let jitter count maxAngle vector =  
+    let jitter count (maxAngle : float<rad>) vector =  
         let random = System.Random()
         let normalised = normalise vector
-        let maxOffsetMagnitude = tan (maxAngle/2.0)
+        let maxOffsetMagnitude = tan (maxAngle/2.0<rad>)
         // Just going to hope the random vector isn't parallel
         let randomPerpendicularVector v = Vector(random.NextDouble()-0.5, random.NextDouble()-0.5, random.NextDouble()-0.5).**v |> normalise
         List.init count (fun _ -> 
