@@ -28,13 +28,13 @@ let softShadowLightIntensity direction samples scattering scene point =
 // Hard shadow determination - in or out. Probably want to change this to a shadow factor when there are area lights.
 let shadowLightIntensity scene light point =
     match light with
-    | DirectionalLight v -> if (intersectsAny scene { o = point; d = -v }) then 0.0 else 1.0
-    | SoftDirectionalLight (direction, samples, scattering) -> softShadowLightIntensity direction samples scattering scene point
+    | Directional v -> if (intersectsAny scene { o = point; d = -v }) then 0.0 else 1.0
+    | SoftDirectional (direction, samples, scattering) -> softShadowLightIntensity direction samples scattering scene point
 
 let lightDirection light = 
     match light with
-        | DirectionalLight v -> v
-        | SoftDirectionalLight (v, _, _) -> v
+        | Directional v -> v
+        | SoftDirectional (v, _, _) -> v
 
 let singleLightShader lightIntensity light intersectedObject = 
     match light with 
@@ -54,7 +54,7 @@ let getLightsOnPoint scene intersectedObject =
     let point = intersectedObject.intersection.p
     scene.lights |> 
     Seq.map (fun light -> 
-        let (lightConfig, colour) = light
+        let (Light (lightConfig, colour)) = light
         let intensity = shadowLightIntensity scene lightConfig point
         (scaleColour intensity colour, (lightDirection lightConfig) );
     )
