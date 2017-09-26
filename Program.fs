@@ -20,8 +20,8 @@ let main argv =
                   ];
         lights =  [
                   // BUG: Have to ensure that light vectors are normalised beforehand.
-                  (DirectionalLight (Vector (1.0, -3.0, 3.0) |> normalise), Colour.white);
-                  (DirectionalLight (Vector (-3.0, -2.0, 3.0) |> normalise), Colour.white);
+                  (SoftDirectionalLight (Vector (1.0, -3.0, 3.0) |> normalise,8, System.Math.PI/5.0), Colour.white);
+                  (SoftDirectionalLight (Vector (-3.0, -2.0, 3.0) |> normalise,8, System.Math.PI /5.0), Colour.white);
                   ];
     }
 

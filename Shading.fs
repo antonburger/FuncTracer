@@ -16,17 +16,33 @@ let shadeOrBackground background shader = function
     | Some fragment -> shader fragment 
     | _ -> background 
 
-// Hard shadow determination - in or out. Probably want to change this to a shadow factor when there are area lights.
-let isInShadow scene light point =
-    match light with
-    | DirectionalLight v -> intersectsAny scene { o = point; d = -v }
+let softShadowLightIntensity direction samples scattering scene point = 
+    let intersectsInDirection d = intersectsAny scene { o = point; d = d}
+    let occludedSampleCount = 
+        jitter samples scattering -direction
+        |> Seq.map intersectsInDirection
+        |> Seq.where id 
+        |> Seq.length
+    (float)(samples-occludedSampleCount)/(float)samples
 
-let singleLightShader light intersectedObject = 
+// Hard shadow determination - in or out. Probably want to change this to a shadow factor when there are area lights.
+let shadowLightIntensity scene light point =
+    match light with
+    | DirectionalLight v -> if (intersectsAny scene { o = point; d = -v }) then 0.0 else 1.0
+    | SoftDirectionalLight (direction, samples, scattering) -> softShadowLightIntensity direction samples scattering scene point
+
+let lightDirection light = 
+    match light with
+        | DirectionalLight v -> v
+        | SoftDirectionalLight (v, _, _) -> v
+
+
+let singleLightShader lightIntensity light intersectedObject = 
     match light with 
-    | (DirectionalLight v, lightColour) -> 
+    | ( v, lightColour) -> 
         let normal = intersectedObject.intersection.n 
         let colour = intersectedObject.sceneObject.Material.colour * lightColour 
-        scaleColour (-v .* normal) colour 
+        scaleColour (lightIntensity*(-(lightDirection v) .* normal)) colour 
 
 let lightShader fragment =
     let intersectedObject = fragment.intersectedObject
@@ -35,7 +51,10 @@ let lightShader fragment =
     let i = fragment.intersectedObject.intersection;
     let shadowRayOrigin = i.p + i.n * 0.0001 
     scene.lights |> 
-    Seq.map (fun l -> if isInShadow scene (fst l) shadowRayOrigin then Colour.black else singleLightShader l intersectedObject) |> 
+    Seq.map (fun l -> 
+            let intensity = shadowLightIntensity scene (fst l) shadowRayOrigin 
+            singleLightShader intensity l intersectedObject
+        ) |> 
     // Accumulate and clamp the colours per light. 
     Seq.fold (+) Colour.black |> 
     Colour.map clamp 
