@@ -7,7 +7,7 @@ open Scene;
 
 type Fragment  = {
     intersectedObject: IntersectedObject; 
-    scene: Scene
+    light: Colour*Vector
 }
 
 type Shader = (Fragment -> Colour)
@@ -36,7 +36,6 @@ let lightDirection light =
         | DirectionalLight v -> v
         | SoftDirectionalLight (v, _, _) -> v
 
-
 let singleLightShader lightIntensity light intersectedObject = 
     match light with 
     | ( v, lightColour) -> 
@@ -46,29 +45,34 @@ let singleLightShader lightIntensity light intersectedObject =
 
 let lightShader fragment =
     let intersectedObject = fragment.intersectedObject
-    let scene = fragment.scene
-    // Arbitrary offset to combat shadow artifacts. 
-    let i = fragment.intersectedObject.intersection;
-    let shadowRayOrigin = i.p + i.n * 0.0001 
+    let normal = intersectedObject.intersection.n 
+    let (lightColour, lightDirection)= fragment.light
+    let intensity= (-lightDirection) .* normal
+    scaleColour intensity (intersectedObject.sceneObject.Material.colour * lightColour)
+
+let getLightsOnPoint scene intersectedObject =
+    let point = intersectedObject.intersection.p
     scene.lights |> 
-    Seq.map (fun l -> 
-            let intensity = shadowLightIntensity scene (fst l) shadowRayOrigin 
-            singleLightShader intensity l intersectedObject
-        ) |> 
-    // Accumulate and clamp the colours per light. 
-    Seq.fold (+) Colour.black |> 
-    Colour.map clamp 
+    Seq.map (fun light -> 
+        let (lightConfig, colour) = light
+        let intensity = shadowLightIntensity scene lightConfig point
+        (scaleColour intensity colour, (lightDirection lightConfig) );
+    )
 
-
-let createFragment scene someIntersection = 
+let createFragments scene someIntersection = 
+    let tuplePush a b = (a,b)
     match someIntersection with 
-    | None -> None
-    | Some intersection -> Some { scene=scene; intersectedObject=intersection }
+    | None -> Seq.empty
+    | Some intersection -> 
+        getLightsOnPoint scene intersection 
+        |> Seq.map (fun light -> {intersectedObject= intersection; light=light})
 
 let shade shader scene (pixelRays : seq<(int * int) * Ray list>) = 
+    let push a b = (a,b)
     let shadePixel (rays : Ray list) = 
         rays |> 
-        Seq.map (intersectScene scene >> (createFragment scene) >> shader) |> 
+        Seq.collect ( intersectScene scene >> (createFragments scene) ) |> 
+        Seq.map shader |>
         Seq.fold (+) Colour.black |> 
         Colour.map (fun c -> c / float rays.Length) 
     Seq.map (fun pixelRay -> async { return (fst pixelRay, shadePixel <| snd pixelRay) }) pixelRays |> Async.Parallel |> Async.RunSynchronously 

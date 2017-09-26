@@ -28,8 +28,7 @@ let main argv =
     let resolution = Resolution (400, 400)
     let c = { o = Point (0.0, 0.0, -20.0); up = Vector (0.0, 1.0, 0.0); lookAt = Point (0.0, 0.0, 1.0); fovY = System.Math.PI / 6.0; aspectRatio = 1.0 }
     let pixelRays = generateRays c resolution
-    let shader = shadeOrBackground Colour.black lightShader 
-    let pixels = shade shader scene pixelRays
+    let pixels = shade lightShader scene pixelRays
     let b = { resolution = resolution; pixels = Seq.toList << Seq.map snd <| pixels }
     write b "test.ppm"
     0
