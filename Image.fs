@@ -4,7 +4,7 @@ open System.IO
 open Ray
 open Vector
 
-type Camera = { o: Point; lookAt: Point; up: Vector; fovY: float; aspectRatio: float }
+type Camera = { o: Point; lookAt: Point; up: Vector; fovY: float<rad>; aspectRatio: float }
 
 let clamp x = 
         match x with
@@ -56,7 +56,7 @@ type ImagePlane = {
 
 let createPlane camera resolution =
     let frame = fromCamera camera
-    let height = tan (camera.fovY / 2.0) * 2.0
+    let height = tan (camera.fovY / 2.0<rad>) * 2.0
     let width = height * camera.aspectRatio
     let pixelHeight = height / (resH resolution - 1 |> float)
     let pixelWidth = width / (resV resolution - 1 |> float)

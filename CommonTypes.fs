@@ -32,6 +32,9 @@ type Colour = Colour of (float * float * float) with
     static member (*) (Colour (r1, g1, b1), Colour (r2, g2, b2)) =
         Colour (r1 * r2, g1 * g2, b1 * b2)
 
+[<Measure>] type rad
+[<Measure>] type deg
+
 module Vector =
     let normalise (v : Vector) =
         let l = v.Length
@@ -66,3 +69,11 @@ module Colour =
     let white = fromRGB 1 1 1
     let red = fromRGB 1 0 0
     let blue = fromRGB 0 0 1
+
+module Deg =
+    let toRad (d : float<deg>) : float<rad> =
+        d * 1.0<rad/deg> * (System.Math.PI / 180.0)
+
+module Rad =
+    let toDeg (r : float<rad>) : float<deg> =
+        r * 1.0<deg/rad> * (180.0 / System.Math.PI)
