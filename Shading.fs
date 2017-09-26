@@ -51,11 +51,12 @@ let lightShader fragment =
     scaleColour intensity (intersectedObject.sceneObject.Material.colour * lightColour)
 
 let getLightsOnPoint scene intersectedObject =
-    let point = intersectedObject.intersection.p
+    // Project shadow rays from fractionally above the intersected point in order to avoid speckling from self-intersections.
+    let shadowRayOrigin = intersectedObject.intersection.p + 0.0001 * intersectedObject.intersection.n
     scene.lights |> 
     Seq.map (fun light -> 
         let (Light (lightConfig, colour)) = light
-        let intensity = shadowLightIntensity scene lightConfig point
+        let intensity = shadowLightIntensity scene lightConfig shadowRayOrigin
         (scaleColour intensity colour, (lightDirection lightConfig) );
     )
 
