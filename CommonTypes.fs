@@ -26,8 +26,23 @@ type Point = Point of (float * float * float) with
     static member (-) (Point (x1, y1, z1), Point (x2, y2, z2)) =
         Vector (x1 - x2, y1 - y2, z1 - z2)
 
-let toVector (Point (x, y, z)) =
-    Vector (x, y, z)
+type Colour = Colour of (float * float * float) with
+    static member (+) (Colour (r1, g1, b1), Colour (r2, g2, b2)) =
+        Colour (r1 + r2, g1 + g2, b1 + b2)
 
-let toPoint (Vector (x, y, z)) =
-    Point (x, y, z)
+module Vector =
+    let toPoint (Vector (x, y, z)) =
+        Point (x, y, z)
+
+module Point =
+    let toVector (Point (x, y, z)) =
+        Vector (x, y, z)
+
+module Colour =
+    let inline fromRGB r g b = Colour (float r, float g, float b)
+    let inline greyScale g = let c = float g in Colour (c, c, c)
+    let map f (Colour (r, g, b)) = Colour (f r, f g, f b)
+    let black = fromRGB 0 0 0
+    let white = fromRGB 1 1 1
+    let red = fromRGB 1 0 0
+    let blue = fromRGB 0 0 1

@@ -8,8 +8,8 @@ type Sphere(centre: Point, radius: float) =
     member this.Radius = radius
     interface Intersectable with
         member this.Intersect r =
-            let ov = toVector r.o
-            let cv = toVector this.Centre
+            let ov = Point.toVector r.o
+            let cv = Point.toVector this.Centre
             let a = r.d .* r.d
             let b = 2.0 * ((ov .* r.d) - (cv .* r.d))
             let c = (cv .* cv) + (ov .* ov) - 2.0 * (ov .* cv) - this.Radius ** 2.0

@@ -6,18 +6,13 @@ open Vector
 
 type Camera = { o: Point; lookAt: Point; up: Vector; fovY: float; aspectRatio: float }
 
-type Colour = Colour of (byte * byte * byte)
-
 let clamp x = 
         match x with
-            | _ when x > 255.0 -> 255uy
-            | _ when x<0.0     -> 0uy
-            | _                -> (byte) x
-let scaleColour intensity (Colour(r,g,b)) =  
-    Colour(
-        clamp ((float)r*intensity),
-        clamp ((float)g*intensity),
-        clamp ((float)b*intensity));
+            | _ when x > 1.0 -> 1.0
+            | _ when x < 0.0 -> 0.0
+            | _ -> x
+let scaleColour intensity colour =  
+    Colour.map (fun c -> intensity * c |> clamp) colour
 
 type Resolution = Resolution of (int * int)
 
@@ -32,7 +27,8 @@ let write b fn =
     let rec writePixels = function
         | [] -> ()
         | Colour (r,g,b)::ps ->
-            writer.WriteLine("{0} {1} {2}", r, g, b)
+            let toByte c = clamp c * 255.0 |> byte
+            writer.WriteLine("{0} {1} {2}", toByte r, toByte g, toByte b)
             writePixels ps
     writer.WriteLine("P3")
     writer.WriteLine("{0} {1}", resH b.resolution, resV b.resolution)

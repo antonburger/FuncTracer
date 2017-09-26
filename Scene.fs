@@ -1,6 +1,6 @@
 module Scene
-open Ray;
-open Image;
+open Ray
+open Image
 
 type Material = {colour:Colour}
 type SceneObject(geometry: Intersectable, material: Material) =
