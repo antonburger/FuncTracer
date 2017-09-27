@@ -38,7 +38,12 @@ module Parsers =
         let numberList = tuple3 firstNumber nextNumber nextNumber
         between (skipChar '(' >>. ws) (skipChar ')') numberList
 
-    let pmaterial = pkeyword "diffuse" ptriple |>> fun diffuse -> { colour = Colour diffuse }
+    let pmaterial = 
+        let factory (r,g,b) reflectance = {colour=(Colour(r,g,b)); reflectance=reflectance}
+        pipe2
+            (pkeyword "diffuse" (ptriple .>> ws1))
+            (pkeyword "reflectance" pfloat)
+            factory
 
     let psphere =
         let factory centre radius material = SceneObject(Sphere(Point centre, radius), material)

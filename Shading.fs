@@ -7,7 +7,9 @@ open Scene;
 
 type Fragment  = {
     intersectedObject: IntersectedObject; 
-    light: Colour*Vector
+    light: Colour*Vector;
+    viewRay: Ray
+    getColour: Vector->Colour
 }
 
 type Shader = (Fragment -> Colour)
@@ -43,12 +45,27 @@ let singleLightShader lightIntensity light intersectedObject =
         let colour = intersectedObject.sceneObject.Material.colour * lightColour 
         scaleColour (lightIntensity*(-(lightDirection v) .* normal)) colour 
 
-let lightShader fragment =
+let diffuseShader fragment =
     let intersectedObject = fragment.intersectedObject
     let normal = intersectedObject.intersection.n 
     let (lightColour, lightDirection)= fragment.light
     let intensity= (-lightDirection) .* normal
     scaleColour intensity (intersectedObject.sceneObject.Material.colour * lightColour)
+
+let reflectionShader fragment = 
+    let intersectedObject = fragment.intersectedObject
+    let material = intersectedObject.sceneObject.Material
+    let normal = intersectedObject.intersection.n 
+    let viewDirection = fragment.viewRay.d
+    let reflectedDirection = Vector.reflect normal viewDirection
+    if (material.reflectance>0.0) then
+        fragment.getColour reflectedDirection |> Colour.map(fun v->v*material.reflectance)
+    else
+        Colour.Zero
+
+let multiPartShader (shaders:Shader list) fragment = 
+    shaders 
+    |> Seq.sumBy (fun v->v fragment)
 
 let getLightsOnPoint scene intersectedObject =
     // Project shadow rays from fractionally above the intersected point in order to avoid speckling from self-intersections.
@@ -60,21 +77,31 @@ let getLightsOnPoint scene intersectedObject =
         (scaleColour intensity colour, (lightDirection lightConfig) );
     )
 
-let createFragments scene someIntersection = 
+let createFragments getColourForDirection scene ray someIntersection = 
     match someIntersection with 
     | None -> Seq.empty
     | Some intersection -> 
         getLightsOnPoint scene intersection 
-        |> Seq.map (fun light -> {intersectedObject= intersection; light=light})
+        |> Seq.map (fun light -> {
+                    intersectedObject= intersection; 
+                    light=light; 
+                    viewRay = ray;
+                    getColour=getColourForDirection intersection.intersection.p
+                })
 
+let slightOffset (ray:Ray) = {o=ray.o + 0.0001 * ray.d; d=ray.d}
 
-let getColourForRay shader scene =
-        intersectScene scene >> 
-        createFragments scene >>
-        Seq.sumBy shader 
+let rec getColourForRay shader scene recursionLimit ray =
+    let getColourForDirection point direction= 
+        if (recursionLimit<=0) then Colour.black else
+        getColourForRay shader scene (recursionLimit-1) {o=point; d=direction}
+    slightOffset ray |>
+    intersectScene scene |> 
+    createFragments getColourForDirection scene ray |>
+    Seq.sumBy shader 
 
 let shade (shader:Shader) scene (pixelRays : seq<(int * int) * Ray list>) = 
     let push a b = (a,b)
-    let shadePixel =  Seq.averageBy (getColourForRay shader scene)
+    let shadePixel =  Seq.averageBy (getColourForRay shader scene 3)
     Seq.map (fun pixelRay -> async { return (fst pixelRay, shadePixel <| snd pixelRay) }) pixelRays |> Async.Parallel |> Async.RunSynchronously 
 

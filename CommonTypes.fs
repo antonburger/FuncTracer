@@ -61,6 +61,9 @@ module Vector =
             normalised+offsetMagnitude*(randomPerpendicularVector normalised) |> normalise
         )
 
+    let reflect (n:Vector) (v:Vector) = n-v
+
+
 module Point =
     let toVector (Point (x, y, z)) =
         Vector (x, y, z)

@@ -14,7 +14,7 @@ with static member Default = {
     }
 
 
-type Material = {colour:Colour}
+type Material = { colour:Colour; reflectance: float }
 type SceneObject(geometry: Intersectable, material: Material) =
     member this.Geometry = geometry
     member this.Material = material
