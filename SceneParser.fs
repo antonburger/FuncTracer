@@ -13,8 +13,9 @@ open Scene
 module Parsers =
     let private ws = skipMany (skipAnyOf [| ' '; '\t' |])
     let private ws1 = skipMany1 (skipAnyOf [| ' '; '\t' |])
-    let private comment = skipChar '#' >>. skipRestOfLine true
-    let private newlines1 = skipMany1 (skipNewline <|> comment)
+    let private skipComment = skipChar '#' >>. skipRestOfLine true
+    let private skipTrivia = skipNewline <|> skipComment
+    let private skipTrailingTrivia1 = skipMany1 skipTrivia
     let private numberOptions =
         NumberLiteralOptions.AllowFraction |||
         NumberLiteralOptions.AllowMinusSign |||
@@ -68,7 +69,7 @@ module Parsers =
 
     let pobjects =
         let object = (psphere <|> pplane) .>> ws
-        sepEndBy object newlines1
+        sepEndBy object skipTrailingTrivia1
 
     let pcamera =
         let factory pos lookAt up fov ratio =
@@ -99,7 +100,7 @@ module Parsers =
 
     let poptions =
         let option = (pcamera <|> psamples <|> presolution) .>> ws
-        sepEndBy option newlines1
+        sepEndBy option skipTrailingTrivia1
 
     let pdirectional =
         let factory dir colour = directional (Vector dir) (Colour colour)
@@ -123,11 +124,14 @@ module Parsers =
 
     let plights =
         let light = (pdirectional <|> psoftDirectional) .>> ws
-        sepEndBy light newlines1
+        sepEndBy light skipTrailingTrivia1
 
     let pscenegraph =
-        let factory options objects lights _ = (options, { objects = objects; lights = lights })
-        pipe4 poptions pobjects plights eof factory
+        let factory options objects lights = (options, { objects = objects; lights = lights })
+        let skipLeadingTrivia = skipMany skipTrivia
+        // BUG: within options, objects or lights, separate objects must be (correctly) newline-separated. But between sections, no newline is required - can run a line on straight from "camera" to "sphere", for instance. Would like to correct this in a way that doesn't *require* newline at EOF.
+        let content = pipe3 poptions pobjects plights factory
+        between skipLeadingTrivia eof content
 
 let parse (reader : TextReader) =
     let result = run Parsers.pscenegraph (reader.ReadToEnd())
