@@ -13,7 +13,11 @@
     <Compile Include="Plane.fs" />
     <Compile Include="Image.fs" />
     <Compile Include="Scene.fs" />
+    <Compile Include="SceneParser.fs" />
     <Compile Include="Shading.fs" />
     <Compile Include="Program.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="fparsec" Version="1.0.3" />
   </ItemGroup>
 </Project>

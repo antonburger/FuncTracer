@@ -4,6 +4,16 @@ open Light
 open Ray
 open Image
 
+type SceneOptions = {
+    camera : Camera;
+    multisampleCount : int;
+}
+with static member Default = {
+        camera = { o = Point (0.0, 0.0, 0.0); lookAt = Point(0.0, 0.0, 1.0); up = Vector (0.0, 1.0, 0.0); fovY = Deg.toRad 50.0<deg>; aspectRatio = 1.0};
+        multisampleCount = 8;
+    }
+
+
 type Material = {colour:Colour}
 type SceneObject(geometry: Intersectable, material: Material) =
     member this.Geometry = geometry

@@ -76,12 +76,11 @@ let rayThroughPixel imagePlane (pixel : int * int) (jitter : float * float) =
     let via = imagePlane.originToCentre + jx * imagePlane.i + jy * imagePlane.j
     { o = imagePlane.origin; d = via }
 
-let generateRays camera resolution =
+let generateRays camera samplesPerPixel resolution =
     let imagePlane = createPlane camera resolution
     let coords = seq { for y in 0..(resV resolution - 1) do for x in 0..(resH resolution - 1) -> (x, y) }
     // let getRays coord = List.singleton <| rayThroughPixel imagePlane coord
     let random = System.Random()
-    let samplesPerPixel = 10
     let getRays coord =
         let jitters = List.init samplesPerPixel (fun _ -> (random.NextDouble() - 0.5, random.NextDouble() - 0.5))
         List.map (fun jitter -> rayThroughPixel imagePlane coord jitter) jitters
