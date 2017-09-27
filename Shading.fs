@@ -61,20 +61,20 @@ let getLightsOnPoint scene intersectedObject =
     )
 
 let createFragments scene someIntersection = 
-    let tuplePush a b = (a,b)
     match someIntersection with 
     | None -> Seq.empty
     | Some intersection -> 
         getLightsOnPoint scene intersection 
         |> Seq.map (fun light -> {intersectedObject= intersection; light=light})
 
-let shade shader scene (pixelRays : seq<(int * int) * Ray list>) = 
+
+let getColourForRay shader scene =
+        intersectScene scene >> 
+        createFragments scene >>
+        Seq.sumBy shader 
+
+let shade (shader:Shader) scene (pixelRays : seq<(int * int) * Ray list>) = 
     let push a b = (a,b)
-    let shadePixel (rays : Ray list) = 
-        rays |> 
-        Seq.collect ( intersectScene scene >> (createFragments scene) ) |> 
-        Seq.map shader |>
-        Seq.fold (+) Colour.black |> 
-        Colour.map (fun c -> c / float rays.Length) 
+    let shadePixel =  Seq.averageBy (getColourForRay shader scene)
     Seq.map (fun pixelRay -> async { return (fst pixelRay, shadePixel <| snd pixelRay) }) pixelRays |> Async.Parallel |> Async.RunSynchronously 
 
