@@ -13,7 +13,8 @@ open Scene
 module Parsers =
     let private ws = skipMany (skipAnyOf [| ' '; '\t' |])
     let private ws1 = skipMany1 (skipAnyOf [| ' '; '\t' |])
-    let private newlines1 = skipMany1 skipNewline
+    let private comment = skipChar '#' >>. skipRestOfLine true
+    let private newlines1 = skipMany1 (skipNewline <|> comment)
     let private numberOptions =
         NumberLiteralOptions.AllowFraction |||
         NumberLiteralOptions.AllowMinusSign |||
@@ -89,8 +90,15 @@ module Parsers =
         let samples = pint32 |>> factory
         pkeyword "samples" samples
 
+    let presolution =
+        let factory res =
+            fun options -> { options with resolution = Resolution res } : SceneOptions
+        let resolution =
+            tuple2 (pint32 .>> ws1) pint32 |>> factory
+        pkeyword "res" resolution
+
     let poptions =
-        let option = (pcamera <|> psamples) .>> ws
+        let option = (pcamera <|> psamples <|> presolution) .>> ws
         sepEndBy option newlines1
 
     let pdirectional =
