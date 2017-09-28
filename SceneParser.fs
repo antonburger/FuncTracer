@@ -11,9 +11,9 @@ open Image
 open Scene
 
 module Parsers =
-    let private ws = skipMany (skipAnyOf [| ' '; '\t' |])
-    let private ws1 = skipMany1 (skipAnyOf [| ' '; '\t' |])
-    let private skipComment = skipChar '#' >>. skipRestOfLine true
+    let private ws = skipMany (skipAnyOf [| ' '; '\t' |] <??> "space or tab")
+    let private ws1 = skipMany1 (skipAnyOf [| ' '; '\t' |] <??> "space or tab")
+    let private skipComment = skipChar '#' >>. skipRestOfLine true <?> "comment"
     let private skipTrivia = skipNewline <|> skipComment
     let private skipTrailingTrivia1 = skipMany1 skipTrivia
     let private numberOptions =
@@ -39,6 +39,7 @@ module Parsers =
         let nextNumber = pchar ',' >>. ws >>. pnumber .>> ws
         let numberList = tuple3 firstNumber nextNumber nextNumber
         between (skipChar '(' >>. ws) (skipChar ')') numberList
+        <??> "comma-separated list of 3 numbers in parens"
 
     let pmaterial = 
         let factory (r,g,b) reflectance = {colour=(Colour(r,g,b)); reflectance=reflectance}
@@ -88,14 +89,14 @@ module Parsers =
     let psamples =
         let factory multisampleCount =
             fun options -> { options with multisampleCount = multisampleCount }
-        let samples = pint32 |>> factory
+        let samples = pint32 |>> factory <??> "positive number"
         pkeyword "samples" samples
 
     let presolution =
         let factory res =
             fun options -> { options with resolution = Resolution res } : SceneOptions
         let resolution =
-            tuple2 (pint32 .>> ws1) pint32 |>> factory
+            tuple2 (pint32 .>> ws1) pint32 |>> factory <??> "two positive numbers"
         pkeyword "res" resolution
 
     let poptions =
