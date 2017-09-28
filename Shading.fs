@@ -12,7 +12,7 @@ type Fragment  = {
     getColour: Vector->Colour
 }
 
-type Shader = (Fragment -> Colour)
+type Shader = (Fragment -> Colour) 
 
 let shadeOrBackground background shader = function 
     | Some fragment -> shader fragment 
@@ -52,6 +52,18 @@ let diffuseShader fragment =
     let intensity= (-lightDirection) .* normal
     scaleColour intensity (intersectedObject.sceneObject.Material.colour * lightColour)
 
+let specualarShader fragment = 
+    let intersectedObject = fragment.intersectedObject
+    let normal = intersectedObject.intersection.n |> normalise
+    let (lightColour, lightDirection)= fragment.light
+    let shineyness = intersectedObject.sceneObject.Material.shineyness
+    let flipLightDirection (Vector (x,y,z)) = Vector(-x,-y, z) // BUG? Why is this needed? 
+    let reflectedLightDirection = Vector.reflect normal (flipLightDirection lightDirection) |> Vector.normalise 
+    let viewDirection = fragment.viewRay.d |> Vector.normalise
+    let intensity = (viewDirection.*(-reflectedLightDirection)) ** shineyness
+    if (shineyness<=0.0 || intensity<=0.0) then Colour.black else
+        lightColour |> Colour.map (fun v->v*intensity)
+
 let reflectionShader fragment = 
     let intersectedObject = fragment.intersectedObject
     let material = intersectedObject.sceneObject.Material
@@ -82,11 +94,12 @@ let createFragments getColourForDirection scene ray someIntersection =
     | None -> Seq.empty
     | Some intersection -> 
         getLightsOnPoint scene intersection 
-        |> Seq.map (fun light -> {
-                    intersectedObject= intersection; 
-                    light=light; 
-                    viewRay = ray;
-                    getColour=getColourForDirection intersection.intersection.p
+        |> Seq.map (fun light -> 
+                {
+                intersectedObject= intersection; 
+                light=light; 
+                viewRay = ray;
+                getColour=getColourForDirection intersection.intersection.p
                 })
 
 let slightOffset (ray:Ray) = {o=ray.o + 0.0001 * ray.d; d=ray.d}
@@ -102,6 +115,6 @@ let rec getColourForRay shader scene recursionLimit ray =
 
 let shade (shader:Shader) scene (pixelRays : seq<(int * int) * Ray list>) = 
     let push a b = (a,b)
-    let shadePixel =  Seq.averageBy (getColourForRay shader scene 3)
+    let shadePixel =  Seq.averageBy (getColourForRay shader scene 8)
     Seq.map (fun pixelRay -> async { return (fst pixelRay, shadePixel <| snd pixelRay) }) pixelRays |> Async.Parallel |> Async.RunSynchronously 
 

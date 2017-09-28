@@ -42,10 +42,12 @@ module Parsers =
         <??> "comma-separated list of 3 numbers in parens"
 
     let pmaterial = 
-        let factory (r,g,b) reflectance = {colour=(Colour(r,g,b)); reflectance=reflectance}
-        pipe2
+        let factory (r,g,b) reflectance shineyness = 
+            { colour=(Colour(r,g,b)); reflectance=reflectance; shineyness=shineyness}
+        pipe3
             (pkeyword "diffuse" (ptriple .>> ws1))
-            (pkeyword "reflectance" pfloat)
+            (pkeyword "reflectance" (pfloat .>> ws1))
+            (pkeyword "shineyness" pfloat)
             factory
 
     let psphere =

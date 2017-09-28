@@ -11,8 +11,8 @@ let clamp x =
             | _ when x > 1.0 -> 1.0
             | _ when x < 0.0 -> 0.0
             | _ -> x
-let scaleColour intensity colour =  
-    Colour.map (fun c -> intensity * c |> clamp) colour
+let scaleColour intensity =  
+    Colour.map (fun c -> intensity * c ) 
 
 type Resolution = Resolution of (int * int)
 

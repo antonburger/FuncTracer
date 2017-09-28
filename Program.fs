@@ -30,7 +30,7 @@ let main argv =
     duration (fun () -> 
                 let (options, scene) = readScene
                 let pixelRays = generateRays options.camera options.multisampleCount options.resolution
-                let shader = multiPartShader [reflectionShader; diffuseShader]
+                let shader = multiPartShader [specualarShader; reflectionShader; diffuseShader]
                 let pixels = shade shader scene pixelRays
                 let b = { resolution = options.resolution; pixels = Seq.toList << Seq.map snd <| pixels }
                 write b "test.ppm" 
