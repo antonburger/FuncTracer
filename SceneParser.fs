@@ -9,6 +9,7 @@ open Plane
 open Light
 open Image
 open Scene
+open Transform
 
 module Parsers =
     let private ws = skipMany (skipAnyOf [| ' '; '\t' |] <??> "space or tab")
@@ -51,7 +52,10 @@ module Parsers =
             factory
 
     let psphere =
-        let factory centre radius material = SceneObject(Sphere(Point centre, radius), material)
+        let factory centre radius material =
+            // TODO: Allow arbitrary transforms. This was just the easiest way to prove the transforms without changing the file format :P
+            let transform = compose [scale (radius, radius, radius); translate (Vector centre)]
+            SceneObject(TransformedObject(Sphere(), transform), material)
         let sphere =
             pipe3
                 (pkeyword "pos" (ptriple .>> ws1))

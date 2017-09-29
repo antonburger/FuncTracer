@@ -1,14 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <ProjectGuid>c0fbaa59-cdd5-4ffe-85ef-65ed2d49f8ed</ProjectGuid>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <ProjectGuid>{c0fbaa59-cdd5-4ffe-85ef-65ed2d49f8ed}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="CommonTypes.fs" />
     <Compile Include="Light.fs" />
     <Compile Include="Ray.fs" />
+    <Compile Include="Transform.fs" />
     <Compile Include="Sphere.fs" />
     <Compile Include="Plane.fs" />
     <Compile Include="Image.fs" />

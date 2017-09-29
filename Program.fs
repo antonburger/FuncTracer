@@ -8,6 +8,7 @@ open Light
 open Image
 open Scene
 open Shading
+open Transform
 
 let readScene =
     match SceneParser.parse Console.In with
@@ -23,7 +24,6 @@ let duration f =
     let returnValue = f()
     printfn "Elapsed Time: %ims" timer.ElapsedMilliseconds
     returnValue    
-
 
 [<EntryPoint>]
 let main argv =
