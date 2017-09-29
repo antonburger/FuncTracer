@@ -26,12 +26,16 @@ type Transform =
     private
     | Translate of Vector
     | Scale of (float * float * float)
+    | Rotate of axis: Vector * angle: float<rad>
     | Composed of Transform list
 
 let translate = Translate
 
 // TODO: Bother checking for zero scales? Not invertible, but hey, if you want to divide by zero, that's your call :P
 let scale = Scale
+
+let rotate axis angle =
+    Rotate (normalise axis, angle)
 
 // Make sure a Composed contains only basic transforms, and never other Composeds.
 let compose transforms =
@@ -43,6 +47,7 @@ let compose transforms =
 let rec inverse = function
     | Translate v -> Translate -v
     | Scale (x, y, z) -> Scale <| (1.0 / x, 1.0 / y, 1.0 / z)
+    | Rotate (axis, angle) -> Rotate (axis, -angle)
     | Composed ts -> Composed <| List.map inverse (List.rev ts)
 
 let identity = Matrix (Array2D.init 4 4 (fun j i -> if i = j then 1.0 else 0.0))
@@ -52,6 +57,16 @@ let rec matrix = function
         Matrix <| Array2D.init 4 4 (fun j i -> if i = j then 1.0 elif i < 3 then 0.0 elif j = 0 then x elif j = 1 then y else z)
     | Scale (x, y, z) ->
         Matrix <| Array2D.init 4 4 (fun j i -> if i <> j then 0.0 elif i = 0 then x elif i = 1 then y elif i = 2 then z else 1.0)
+    | Rotate (Vector (ux, uy, uz), angle) ->
+        let c = cos (angle / 1.0<rad>)
+        let invc = 1.0 - c
+        let s = sin (angle / 1.0<rad>)
+        [|
+            [| c + invc * ux * ux      ; invc * ux * uy - s * uz ; invc * ux * uz + s * uy ; 0.0 |];
+            [| invc * ux * uy + s * uz ; c + invc * uy * uy      ; invc * uy * uz - s * ux ; 0.0 |];
+            [| invc * ux * uz - s * uy ; invc * uy * uz + s * ux ; c + invc * uz * uz      ; 0.0 |];
+            [| 0.0                     ; 0.0                     ; 0.0                     ; 1.0 |];
+        |] |> array2D |> Matrix
     | Composed ts ->
         List.foldBack (*) (ts |> List.rev |> List.map matrix) identity
 
