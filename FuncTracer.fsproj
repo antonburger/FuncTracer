@@ -10,6 +10,7 @@
     <Compile Include="Ray.fs" />
     <Compile Include="Transform.fs" />
     <Compile Include="Sphere.fs" />
+    <Compile Include="Cylinder.fs" />
     <Compile Include="Plane.fs" />
     <Compile Include="Image.fs" />
     <Compile Include="Scene.fs" />

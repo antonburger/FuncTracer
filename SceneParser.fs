@@ -5,6 +5,7 @@ open FParsec.CharParsers
 open FParsec.Primitives
 open Vector
 open Sphere
+open Cylinder
 open Plane
 open Light
 open Image
@@ -64,6 +65,20 @@ module Parsers =
                 factory
         pkeyword "sphere" sphere
 
+    let pcylinder =
+        let factory centre radius height material =
+            // TODO: Allow arbitrary transforms. This was just the easiest way to prove the transforms without changing the file format :P
+            let transform = compose [scale (radius, height, radius); translate (Vector centre)]
+            SceneObject(TransformedObject(Cylinder(), transform), material)
+        let cylinder =
+            pipe4
+                (pkeyword "pos" (ptriple .>> ws1))
+                (pkeyword "radius" (pnonNegativeNumber .>> ws1))
+                (pkeyword "height" (pnonNegativeNumber .>> ws1))
+                pmaterial
+                factory
+        pkeyword "cylinder" cylinder
+
     let pplane =
         let factory point normal material = SceneObject(Plane(Point point, Vector normal |> normalise), material)
         let plane =
@@ -75,7 +90,7 @@ module Parsers =
         pkeyword "plane" plane
 
     let pobjects =
-        let object = (psphere <|> pplane) .>> ws
+        let object = (psphere <|> pplane <|> pcylinder) .>> ws
         sepEndBy object skipTrailingTrivia1
 
     let pcamera =
