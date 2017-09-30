@@ -4,6 +4,12 @@ open Light
 open Ray
 open Image
 
+module Seq = 
+    let firstOrNone seq = 
+        if Seq.isEmpty seq
+            then None
+            else Some <| Seq.head seq
+
 type SceneOptions = {
     camera : Camera;
     multisampleCount : int;
@@ -27,23 +33,29 @@ type Scene = {
     objects: SceneObject list;
     lights: Light list;
 }
+
+module Scene = 
+    let addObject obj scene = {scene with objects=obj::scene.objects}
+
 type IntersectedObject = { intersection: RayIntersection; sceneObject: SceneObject }
 
-let closest intersections =
-    let rayDistance = fun { intersection={ t = t } } -> t
-    let candidates = intersections |>
-                     Seq.sortBy rayDistance |>
-                     Seq.skipWhile (rayDistance >> (>) 0.0)
-    if Seq.isEmpty candidates
-        then None
-        else Some <| Seq.head candidates
 
-let intersectScene ({ objects = objects }) r =
+
+let sortByDistance = 
+    let rayDistance = fun { intersection={ t = t } } -> t
+    Seq.sortBy rayDistance >>
+    Seq.skipWhile (rayDistance >> (>) 0.0)
+
+let closest = sortByDistance >> Seq.firstOrNone
+
+let getAllIntersections ({ objects = objects }) r =
     let flip f = fun x y -> f y x
     objects |> Seq.collect ( 
                 fun obj -> flip intersect r obj 
                         |> Seq.map(fun v->{intersection=v; sceneObject=obj})
-        ) |> closest
+        ) 
+
+let intersectScene scene  = getAllIntersections scene >>  closest
 
 // Just look for *an* intersection. Not interested in the closest one.
 let intersectsAny ({ objects = objects }) r =

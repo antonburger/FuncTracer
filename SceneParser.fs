@@ -11,8 +11,13 @@ open Light
 open Image
 open Scene
 open Transform
+open Geometry
 
 module Parsers =
+
+    let sphere1 = TransformedObject(Sphere(), compose [scale (1.0, 1.0, 1.0); translate (Vector(-0.2,0.0,0.0) )]) 
+    let sphere2 = TransformedObject(Sphere(), compose [scale (1.0, 1.0, 1.0); translate (Vector(0.2,0.0,0.0) )]) 
+
     let private ws = skipMany (skipAnyOf [| ' '; '\t' |] <??> "space or tab")
     let private ws1 = skipMany1 (skipAnyOf [| ' '; '\t' |] <??> "space or tab")
     let private skipComment = skipChar '#' >>. skipRestOfLine true <?> "comment"
@@ -89,8 +94,60 @@ module Parsers =
                 factory
         pkeyword "plane" plane
 
+    let punion =
+        let factory centre radius material =
+            // TODO: Allow arbitrary transforms. This was just the easiest way to prove the transforms without changing the file format :P
+            let transform = compose [scale (radius, radius, radius); translate (Vector centre)]
+            SceneObject(TransformedObject(union sphere1 sphere2 , transform), material)
+        let sphere =
+            pipe3
+                (pkeyword "pos" (ptriple .>> ws1))
+                (pkeyword "scale" (pnonNegativeNumber .>> ws1))
+                pmaterial
+                factory
+        pkeyword "union" sphere
+
+    let psubtract =
+        let factory centre radius material =
+            // TODO: Allow arbitrary transforms. This was just the easiest way to prove the transforms without changing the file format :P
+            let transform = compose [scale (radius, radius, radius); translate (Vector centre)]
+            SceneObject(TransformedObject(subtract sphere1 sphere2, transform), material)
+        let sphere =
+            pipe3
+                (pkeyword "pos" (ptriple .>> ws1))
+                (pkeyword "scale" (pnonNegativeNumber .>> ws1))
+                pmaterial
+                factory
+        pkeyword "subtract" sphere
+
+    let pintersect =
+        let factory centre radius material =
+            // TODO: Allow arbitrary transforms. This was just the easiest way to prove the transforms without changing the file format :P
+            let transform = compose [scale (radius, radius, radius); translate (Vector centre)]
+            SceneObject(TransformedObject(intersect sphere1 sphere2, transform), material)
+        let sphere =
+            pipe3
+                (pkeyword "pos" (ptriple .>> ws1))
+                (pkeyword "scale" (pnonNegativeNumber .>> ws1))
+                pmaterial
+                factory
+        pkeyword "intersect" sphere
+
+    let pexclude =
+        let factory centre radius material =
+            // TODO: Allow arbitrary transforms. This was just the easiest way to prove the transforms without changing the file format :P
+            let transform = compose [scale (radius, radius, radius); translate (Vector centre)]
+            SceneObject(TransformedObject(exclude sphere1 sphere2, transform), material)
+        let sphere =
+            pipe3
+                (pkeyword "pos" (ptriple .>> ws1))
+                (pkeyword "scale" (pnonNegativeNumber .>> ws1))
+                pmaterial
+                factory
+        pkeyword "exclude" sphere
+
     let pobjects =
-        let object = (psphere <|> pplane <|> pcylinder) .>> ws
+        let object = (psubtract <|> pexclude <|> pintersect <|> punion <|> psphere <|> pplane <|> pcylinder) .>> ws
         sepEndBy object skipTrailingTrivia1
 
     let pcamera =
