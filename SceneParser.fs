@@ -6,6 +6,7 @@ open FParsec.Primitives
 open Vector
 open Sphere
 open Cylinder
+open Cone
 open Plane
 open Light
 open Image
@@ -84,6 +85,20 @@ module Parsers =
                 factory
         pkeyword "cylinder" cylinder
 
+    let pcone =
+        let factory centre radius height material =
+            // TODO: Allow arbitrary transforms. This was just the easiest way to prove the transforms without changing the file format :P
+            let transform = compose [scale (radius, height, radius); translate (Vector centre)]
+            SceneObject(TransformedObject(Cone(), transform), material)
+        let cone =
+            pipe4
+                (pkeyword "pos" (ptriple .>> ws1))
+                (pkeyword "radius" (pnonNegativeNumber .>> ws1))
+                (pkeyword "height" (pnonNegativeNumber .>> ws1))
+                pmaterial
+                factory
+        pkeyword "cone" cone
+
     let pplane =
         let factory point normal material = SceneObject(Plane(Point point, Vector normal |> normalise), material)
         let plane =
@@ -147,7 +162,7 @@ module Parsers =
         pkeyword "exclude" sphere
 
     let pobjects =
-        let object = (psubtract <|> pexclude <|> pintersect <|> punion <|> psphere <|> pplane <|> pcylinder) .>> ws
+        let object = (psubtract <|> pexclude <|> pintersect <|> punion <|> psphere <|> pplane <|> pcylinder <|> pcone) .>> ws
         sepEndBy object skipTrailingTrivia1
 
     let pcamera =
