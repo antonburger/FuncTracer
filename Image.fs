@@ -3,6 +3,7 @@ module Image
 open System.IO
 open Ray
 open Vector
+open SixLabors.ImageSharp
 
 type Camera = { o: Point; lookAt: Point; up: Vector; fovY: float<rad>; aspectRatio: float }
 
@@ -22,18 +23,15 @@ let resH (Resolution r) = fst r
 let resV (Resolution r) = snd r
 
 let write b fn =
-    use stream = new FileStream(fn, FileMode.Create, FileAccess.Write, FileShare.None)
-    use writer = new StreamWriter(stream, System.Text.Encoding.ASCII)
-    let rec writePixels = function
-        | [] -> ()
-        | Colour (r,g,b)::ps ->
-            let toByte c = clamp c * 255.0 |> byte
-            writer.WriteLine("{0} {1} {2}", toByte r, toByte g, toByte b)
-            writePixels ps
-    writer.WriteLine("P3")
-    writer.WriteLine("{0} {1}", resH b.resolution, resV b.resolution)
-    writer.WriteLine("255")
-    writePixels b.pixels
+    let toByte c = clamp c * 255.0 |> byte
+    let width = resH b.resolution
+    let writePixel (image: Image<Rgba32>) (index: int) (Colour (r, g, b)) =
+        let x, y = index % width, index / width
+        image.[x, y] <- Rgba32(toByte r, toByte g, toByte b)
+    use image = new Image<Rgba32>(resH b.resolution, resV b.resolution)
+    use output = new FileStream("test.png", FileMode.Create, FileAccess.Write, FileShare.None)
+    List.iteri (writePixel image) b.pixels
+    image.Save(output, Formats.Png.PngEncoder())
 
 type Frame = { i : Vector; j : Vector; k : Vector }
 
