@@ -17,19 +17,14 @@ type Cone() =
             let a = dx * dx + dz * dz - dy * dy
             let b = 2.0 * (ox * dx + oz * dz - oy * dy)
             let c = ox * ox + oz * oz - oy * oy
-            let discriminant = b ** 2.0 - 4.0 * a * c
-            if discriminant < 0.0 then Seq.empty
-            else
-                let sq = sqrt discriminant
-                let twoa = 2.0 * a
-                let intersection t =
-                    let (Point (px, py, pz)) = (Point (ox, oy, oz)) + t * r.d
-                    // Shift the intersected point back into the desired frame.
-                    let p = Point (px, py + 1.0, pz)
-                    // But leave the normal as is - not affected by translation.
-                    let n = Vector (px, -py, pz) |> normalise
-                    { t = t; p = p; n = if n .* r.d < 0.0 then n else -n }
-                seq [ (-b + sq) / twoa; (-b - sq) / twoa ] |>
-                Seq.map intersection |>
-                Seq.filter (fun { p = Point(_, py, _) } -> py >= 0.0 && py <= 1.0)
+            let intersection t =
+                let (Point (px, py, pz)) = (Point (ox, oy, oz)) + t * r.d
+                // Shift the intersected point back into the desired frame.
+                let p = Point (px, py + 1.0, pz)
+                // But leave the normal as is - not affected by translation.
+                let n = Vector (px, -py, pz) |> normalise
+                { t = t; p = p; n = if n .* r.d < 0.0 then n else -n }
+            Math.quadratic a b c |>
+            Seq.map intersection |>
+            Seq.filter (fun { p = Point(_, py, _) } -> py >= 0.0 && py <= 1.0)
 

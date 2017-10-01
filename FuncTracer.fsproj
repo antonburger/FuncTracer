@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="CommonTypes.fs" />
+    <Compile Include="Math.fs" />
     <Compile Include="Light.fs" />
     <Compile Include="Ray.fs" />
     <Compile Include="Transform.fs" />
