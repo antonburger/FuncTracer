@@ -16,7 +16,8 @@ type private CsgIntersectionRule = Take | Discard | Flip
 
 type private CsgRules = (CsgIntersectionType->CsgIntersectionRule)
 
-let private unionRules intersectionType = match intersectionType with
+let private unionRules intersectionType =
+    match intersectionType with
         | OutsideIntoA -> Take
         | OutsideIntoB -> Take
         | AIntoOutside -> Take
@@ -53,44 +54,47 @@ let private excludeRules intersectionType =
         | AIntoOutside -> Take
         | BIntoOutside -> Take
 
-let private getIntersectionType hitA inA inB = 
-    if hitA then match (inA, inB) with
+type private CsgIntersectedObject = HitA | HitB
+
+let private getIntersectionType intersectedObject inA inB = 
+    match intersectedObject with
+    | HitA ->
+        match (inA, inB) with
             | (true,true)   -> ABleaveA
             | (false,true)  -> BIntoAB
             | (true,false)  -> AIntoOutside
             | (false,false) -> OutsideIntoA
-    else match (inA, inB) with
+    | HitB ->
+        match (inA, inB) with
             | (true,true)   -> ABleaveB
             | (false,true)  -> BIntoOutside
             | (true,false)  -> AIntoAB
             | (false,false) -> OutsideIntoB
-type ConstructedSolid (rules:CsgRules, a:Intersectable, b: Intersectable)  =
-    interface Intersectable with 
-        member this.Intersect r = 
-            let tuplePush a b = b,a
-            let aIntersections = a.Intersect r |> Seq.map (tuplePush a) 
-            let bIntersections = b.Intersect r |> Seq.map (tuplePush b)  
-            let merged = (Seq.concat [aIntersections;bIntersections])   
-                            |> Seq.sortBy (fun v->(fst v).t) 
-                            |> Seq.toList 
-            let rec iterate insideA insideB mergedList =  
-                match mergedList with 
-                    | [] -> [] 
-                    | head::tail ->  
-                        let (intersection,object) = head 
-                        let hitA = object=a
-                        let intersectionType = getIntersectionType hitA insideA insideB
-                        let action = rules intersectionType
-                        let flipNormal i = { i with n=(-1.0*i.n)}
-                        let nextInA = (if (object=a) then not insideA else insideA)
-                        let nextInB = (if (object=b) then not insideB else insideB)
-                        match action with
-                            | Take    -> head::(iterate nextInA nextInB tail)
-                            | Discard -> (iterate nextInA nextInB tail)
-                            | Flip    -> (flipNormal intersection, object)::(iterate nextInA nextInB tail)
-            iterate false false merged |> Seq.map fst 
 
-let union a b = ConstructedSolid(unionRules,a,b)
-let subtract a b = ConstructedSolid(subtractRules,a,b)
-let intersect a b = ConstructedSolid(intersectRules,a,b)
-let exclude a b = ConstructedSolid(excludeRules,a,b)
+let private constructedSolid rules (a : Intersectable) (b : Intersectable) r =
+    let tuplePush a b = b,a
+    let aIntersections = a r |> Seq.map (tuplePush HitA) 
+    let bIntersections = b r |> Seq.map (tuplePush HitB)  
+    let merged = (Seq.concat [aIntersections;bIntersections])   
+                    |> Seq.sortBy (fun v->(fst v).t) 
+                    |> Seq.toList 
+    let rec iterate insideA insideB mergedList =  
+        match mergedList with 
+            | [] -> [] 
+            | head::tail ->  
+                let (intersection,intersectedObject) = head 
+                let intersectionType = getIntersectionType intersectedObject insideA insideB
+                let action = rules intersectionType
+                let flipNormal i = { i with n=(-1.0*i.n)}
+                let nextInA = match intersectedObject with | HitA -> true | _ -> false
+                let nextInB = match intersectedObject with | HitB -> true | _ -> false
+                match action with
+                    | Take    -> head::(iterate nextInA nextInB tail)
+                    | Discard -> (iterate nextInA nextInB tail)
+                    | Flip    -> (flipNormal intersection, intersectedObject)::(iterate nextInA nextInB tail)
+    iterate false false merged |> Seq.map fst 
+
+let union = constructedSolid unionRules
+let subtract = constructedSolid subtractRules
+let intersect = constructedSolid intersectRules
+let exclude = constructedSolid excludeRules

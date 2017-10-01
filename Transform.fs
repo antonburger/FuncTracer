@@ -77,12 +77,9 @@ let transpose (Matrix m) =
 let inverseTranspose =
     inverse >> matrix >> transpose
 
-type TransformedObject(underlyingObject : Intersectable, transform : Transform) =
-    let underlyingObject = underlyingObject
+let transformedObject intersectable transform ray =
     let modelToWorld = matrix transform
     let worldToModel = matrix (inverse transform)
     let normalToWorld = inverseTranspose transform
-    interface Intersectable with
-        member this.Intersect r =
-            let r' = { o = worldToModel * r.o; d = worldToModel * r.d }
-            intersect underlyingObject r' |> Seq.map (fun ix -> { ix with p = modelToWorld * ix.p; n = normalToWorld * ix.n |> normalise })
+    let r' = { o = worldToModel * ray.o; d = worldToModel * ray.d }
+    intersectable r' |> Seq.map (fun ix -> { ix with p = modelToWorld * ix.p; n = normalToWorld * ix.n |> normalise })

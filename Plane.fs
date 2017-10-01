@@ -4,22 +4,16 @@ open Ray
 open Vector
 
 // Plane equation: (p - p0).n = 0
-type Plane(p0 : Point, n : Vector) =
-    member this.P0 = p0
-    member this.N = normalise n
-    interface Intersectable with
-        member this.Intersect r =
-            let eps = 0.0000001
-            let num = (this.P0 - r.o) .* this.N
-            let denom = r.d .* this.N
-            if abs denom < eps then
-                if num < eps
-                    then seq [ { t = 0.0; p = r.o; n = this.N } ]
-                    else Seq.empty
-            elif sign num = sign denom then
-                let t = num / denom
-                seq [ { t = t; p = r.o + t * r.d; n = this.N } ]
-            else
-                Seq.empty
-
-let plane p0 n = Plane(p0, n)
+let plane p0 n r =
+    let eps = 0.0000001
+    let num = (p0 - r.o) .* n
+    let denom = r.d .* n
+    if abs denom < eps then
+        if num < eps
+            then seq [ { t = 0.0; p = r.o; n = n } ]
+            else Seq.empty
+    elif sign num = sign denom then
+        let t = num / denom
+        seq [ { t = t; p = r.o + t * r.d; n = n } ]
+    else
+        Seq.empty

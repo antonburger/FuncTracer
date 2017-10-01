@@ -26,8 +26,7 @@ type Material = { colour:Colour; reflectance: float; shineyness: float }
 type SceneObject(geometry: Intersectable, material: Material) =
     member this.Geometry = geometry
     member this.Material = material
-    interface Intersectable with
-        member this.Intersect r = this.Geometry.Intersect r
+    member this.Intersect r = this.Geometry r
 
 type Scene = {
     objects: SceneObject list;
@@ -51,7 +50,7 @@ let closest = sortByDistance >> Seq.firstOrNone
 let getAllIntersections ({ objects = objects }) r =
     let flip f = fun x y -> f y x
     objects |> Seq.collect ( 
-                fun obj -> flip intersect r obj 
+                fun obj -> obj.Intersect r
                         |> Seq.map(fun v->{intersection=v; sceneObject=obj})
         ) 
 
@@ -61,5 +60,5 @@ let intersectScene scene  = getAllIntersections scene >>  closest
 let intersectsAny ({ objects = objects }) r =
     let flip f = fun x y -> f y x
     objects |>
-    Seq.collect (flip intersect r) |>
+    Seq.collect (fun obj -> obj.Intersect r) |>
     Seq.exists (fun i -> i.t >= 0.0)
