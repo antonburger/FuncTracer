@@ -22,14 +22,14 @@ type Bitmap = { resolution: Resolution; pixels : Colour list }
 let resH (Resolution r) = fst r
 let resV (Resolution r) = snd r
 
-let write b fn =
+let write b output =
     let toByte c = clamp c * 255.0 |> byte
     let width = resH b.resolution
     let writePixel (image: Image<Rgba32>) (index: int) (Colour (r, g, b)) =
         let x, y = index % width, index / width
         image.[x, y] <- Rgba32(toByte r, toByte g, toByte b)
     use image = new Image<Rgba32>(resH b.resolution, resV b.resolution)
-    use output = new FileStream("test.png", FileMode.Create, FileAccess.Write, FileShare.None)
+    //use output = new FileStream(outputFilename, FileMode.Create, FileAccess.Write, FileShare.None)
     List.iteri (writePixel image) b.pixels
     image.Save(output, Formats.Png.PngEncoder())
 
@@ -82,4 +82,4 @@ let generateRays camera samplesPerPixel resolution =
     let getRays coord =
         let jitters = List.init samplesPerPixel (fun _ -> (random.NextDouble() - 0.5, random.NextDouble() - 0.5))
         List.map (fun jitter -> rayThroughPixel imagePlane coord jitter) jitters
-    Seq.map (fun coord -> (coord, getRays coord)) coords
+    (Seq.map (fun coord -> (coord, getRays coord)) coords, (resV resolution) * (resH resolution) * samplesPerPixel)
