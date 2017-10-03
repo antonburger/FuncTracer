@@ -16,10 +16,8 @@ type Plane(p0 : Point, n : Vector) =
                 if num < eps
                     then seq [ { t = 0.0; p = r.o; n = this.N } ]
                     else Seq.empty
-            elif sign num = sign denom then
+            else
                 let t = num / denom
                 seq [ { t = t; p = r.o + t * r.d; n = this.N } ]
-            else
-                Seq.empty
 
 let plane p0 n = Plane(p0, n)

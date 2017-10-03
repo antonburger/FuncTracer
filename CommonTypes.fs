@@ -23,6 +23,7 @@ type Point = Point of (float * float * float) with
         Point (px + vx, py + vy, pz + vz)
     static member (+) (v : Vector, p : Point) =
         p + v
+    static member Zero = Point(0.0,0.0,0.0)
     static member (-) (Point (x1, y1, z1), Point (x2, y2, z2)) =
         Vector (x1 - x2, y1 - y2, z1 - z2)
 

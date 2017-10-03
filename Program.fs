@@ -34,13 +34,24 @@ let duration f =
 //    let mattWhite obj = SceneObject( obj, { colour=Colour(1.0,1.0,1.0); reflectance= 0.0; shineyness= 0.0 })
 //    scene |> Scene.addObject (mattWhite (Subtract(sphere1,sphere2) ))
 
-let printIntersectionAt pixel =
-    let (options, scene) = readScene <| file "sample.scene"
+let printIntersectionAt pixel source =
+    let (options, scene) = readScene source
     let imagePlane = createPlane options.camera options.resolution
     let ray=rayThroughPixel imagePlane pixel (Jitter.JitterOffset (0.0, 0.0))
     let intersection = intersectScene scene ray
     eprintfn "intersection:"
     eprintfn "%A" intersection
+    eprintfn "material:"
+    eprintfn "%A" intersection.Value.sceneObject.Material
+
+    let reversedRay={d=(-ray.d); o=intersection.Value.intersection.p}
+    eprintfn "Reversed Intersection:"
+    let reversedIntersection = intersectScene scene (slightOffset reversedRay)
+    eprintfn "%A" reversedIntersection
+    eprintfn "material:"
+    eprintfn "%A" reversedIntersection.Value.sceneObject.Material
+
+
 
 let runTracer (timer:Diagnostics.Stopwatch, input:TextReader, output:Stream) = 
     let (options, scene) = readScene input
@@ -79,7 +90,9 @@ let getInputStream (args : string[]) : TextReader =
 
 [<EntryPoint>]
 let main (args) =
-    eprintfn "Arguments: %s" args.[0]
+    //printIntersectionAt (PixelCoord(220,220)) (file "house.scene")
+    //0
+    printfn "Arguments: %s" args.[0]
     use input = getInputStream args
     use output = getOutputStream args
     duration (fun timer -> runTracer (timer, input, output))
