@@ -12,12 +12,12 @@ namespace GUI
         {
         }
 
-        public static MemoryStream Run(out string messages)
+        public static MemoryStream Run(string path, out string messages)
         {
             var info = new ProcessStartInfo
             {
                 FileName = "dotnet",
-                Arguments = "run sample.scene",
+                Arguments = String.Format("run --no-build \"{0}\"", path),
                 WorkingDirectory = @"..\..\..",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,

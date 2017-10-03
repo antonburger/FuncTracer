@@ -34,10 +34,10 @@ let duration f =
 //    let mattWhite obj = SceneObject( obj, { colour=Colour(1.0,1.0,1.0); reflectance= 0.0; shineyness= 0.0 })
 //    scene |> Scene.addObject (mattWhite (Subtract(sphere1,sphere2) ))
 
-let printIntersectionAt (x,y) =  
+let printIntersectionAt pixel =
     let (options, scene) = readScene <| file "sample.scene"
     let imagePlane = createPlane options.camera options.resolution
-    let ray=rayThroughPixel imagePlane (x,y) (0.0,0.0)
+    let ray=rayThroughPixel imagePlane pixel (Jitter.JitterOffset (0.0, 0.0))
     let intersection = intersectScene scene ray
     eprintfn "intersection:"
     eprintfn "%A" intersection
@@ -45,8 +45,8 @@ let printIntersectionAt (x,y) =
 let runTracer (timer:Diagnostics.Stopwatch, input:TextReader, output:Stream) = 
     let (options, scene) = readScene input
     eprintfn "Parsed input %ims" timer.ElapsedMilliseconds
-    let (pixelRays, count) = generateRays options.camera options.multisampleCount options.resolution
-    eprintfn "Generated %i rays: %ims" count timer.ElapsedMilliseconds
+    let pixelRays = generateRays options.camera options.multisampleCount options.resolution
+    eprintfn "Generated rays: %ims" timer.ElapsedMilliseconds
     let shader = multiPartShader [specularShader; reflectionShader; diffuseShader]
     eprintfn "Created shader: %ims" timer.ElapsedMilliseconds
     let pixels = shade shader scene pixelRays

@@ -16,7 +16,7 @@ type private CsgIntersectionRule = Take | Discard | Flip
 
 type private CsgRules = (CsgIntersectionType->CsgIntersectionRule)
 
-let private unionRules intersectionType = 
+let private unionRules intersectionType =
     match intersectionType with
         | OutsideIntoA -> Take
         | OutsideIntoB -> Take
@@ -55,18 +55,19 @@ let private excludeRules intersectionType =
         | BIntoOutside -> Take
 
 let private getIntersectionType hitA inA inB = 
-    if hitA then 
+    if hitA then
         match (inA, inB) with
             | (true,true)   -> ABleaveA
             | (false,true)  -> BIntoAB
             | (true,false)  -> AIntoOutside
             | (false,false) -> OutsideIntoA
-    else 
+    else
         match (inA, inB) with
-            | (true,true)   -> ABleaveB
-            | (false,true)  -> BIntoOutside
-            | (true,false)  -> AIntoAB
-            | (false,false) -> OutsideIntoB
+        | (true,true)   -> ABleaveB
+        | (false,true)  -> BIntoOutside
+        | (true,false)  -> AIntoAB
+        | (false,false) -> OutsideIntoB
+
 type ConstructedSolid (rules:CsgRules, a:Intersectable, b: Intersectable)  =
     interface Intersectable with 
         member this.Intersect r = 
