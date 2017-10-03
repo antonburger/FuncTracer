@@ -49,7 +49,7 @@ let main argv =
                 let pixelRays = generateRays options.camera options.multisampleCount options.resolution
                 let shader = multiPartShader [specualarShader; reflectionShader; diffuseShader]
                 let pixels = shade shader scene pixelRays
-                let b = { resolution = options.resolution; pixels = Seq.toList << Seq.map snd <| pixels }
-                write b "test.ppm" 
+                let bitmap = { resolution = options.resolution; pixels = Seq.toList << Seq.map snd <| pixels }
+                write bitmap "test.png"
                 0
              )
