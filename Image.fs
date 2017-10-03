@@ -19,14 +19,14 @@ type Bitmap = { resolution: Resolution; pixels : Colour list }
 let resH (Resolution r) = fst r
 let resV (Resolution r) = snd r
 
-let write bitmap filename =
+let write bitmap output =
     let toByte c = Math.clamp c * 255.0 |> byte
     let width = resH bitmap.resolution
     let writePixel (image: Image<Rgba32>) (index: int) (Colour (r, g, b)) =
         let x, y = index % width, index / width
         image.[x, y] <- Rgba32(toByte r, toByte g, toByte b)
     use image = new Image<Rgba32>(resH bitmap.resolution, resV bitmap.resolution)
-    use output = new FileStream(filename, FileMode.Create, FileAccess.Write, FileShare.None)
+    //use output = new FileStream(filename, FileMode.Create, FileAccess.Write, FileShare.None)
     List.iteri (writePixel image) bitmap.pixels
     image.Save(output, Formats.Png.PngEncoder())
 

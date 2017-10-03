@@ -53,7 +53,7 @@ let diffuseShader fragment =
     let intensity= (-lightDirection) .* normal
     scaleColour intensity (intersectedObject.sceneObject.Material.colour * lightColour)
 
-let specualarShader fragment = 
+let specularShader fragment = 
     let intersectedObject = fragment.intersectedObject
     let normal = intersectedObject.intersection.n |> normalise
     let (lightColour, lightDirection)= fragment.light
