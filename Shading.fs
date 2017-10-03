@@ -58,8 +58,7 @@ let specularShader fragment =
     let normal = intersectedObject.intersection.n |> normalise
     let (lightColour, lightDirection)= fragment.light
     let shineyness = intersectedObject.sceneObject.Material.shineyness
-    let flipLightDirection (Vector (x,y,z)) = Vector(-x,-y, z) // BUG? Why is this needed? 
-    let reflectedLightDirection = Vector.reflect normal (flipLightDirection lightDirection) |> Vector.normalise 
+    let reflectedLightDirection = Vector.reflect normal lightDirection |> Vector.normalise 
     let viewDirection = fragment.viewRay.d |> Vector.normalise
     let intensity = (viewDirection.*(-reflectedLightDirection)) ** shineyness
     if (shineyness<=0.0 || intensity<=0.0) then Colour.black else

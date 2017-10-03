@@ -61,7 +61,7 @@ module Vector =
             normalised+offsetMagnitude*(randomPerpendicularVector normalised) |> normalise
         )
 
-    let reflect (n:Vector) (v:Vector) = n-v
+    let reflect (n:Vector) (v:Vector) = v-(2.0*(v.*n)*n)
 
 
 module Point =
