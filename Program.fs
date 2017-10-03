@@ -22,7 +22,7 @@ let readScene source =
 let file (name:string) = new StreamReader(name)
 
 let duration f = 
-    let timer = new System.Diagnostics.Stopwatch()
+    let timer = System.Diagnostics.Stopwatch()
     timer.Start()
     let returnValue = f()
     printfn "Elapsed Time: %ims" timer.ElapsedMilliseconds
