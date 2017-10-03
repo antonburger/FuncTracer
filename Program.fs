@@ -34,10 +34,10 @@ let duration f =
 //    let mattWhite obj = SceneObject( obj, { colour=Colour(1.0,1.0,1.0); reflectance= 0.0; shineyness= 0.0 })
 //    scene |> Scene.addObject (mattWhite (Subtract(sphere1,sphere2) ))
 
-let printIntersectionAt (x,y) =  
+let printIntersectionAt pixel =
     let (options, scene) = readScene <| file "sample.scene"
     let imagePlane = createPlane options.camera options.resolution
-    let ray=rayThroughPixel imagePlane (x,y) (0.0,0.0)
+    let ray=rayThroughPixel imagePlane pixel (Jitter.JitterOffset (0.0, 0.0))
     let intersection = intersectScene scene ray
     printfn "intersection:"
     printfn "%A" intersection

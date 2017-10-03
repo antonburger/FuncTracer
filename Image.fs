@@ -3,15 +3,12 @@ module Image
 open System.IO
 open Ray
 open Vector
+open Jitter
 open SixLabors.ImageSharp
 
 type Camera = { o: Point; lookAt: Point; up: Vector; fovY: float<rad>; aspectRatio: float }
+type PixelCoord = PixelCoord of x: int * y: int
 
-let clamp x = 
-        match x with
-            | _ when x > 1.0 -> 1.0
-            | _ when x < 0.0 -> 0.0
-            | _ -> x
 let scaleColour intensity =  
     Colour.map (fun c -> intensity * c ) 
 
@@ -23,7 +20,7 @@ let resH (Resolution r) = fst r
 let resV (Resolution r) = snd r
 
 let write bitmap filename =
-    let toByte c = clamp c * 255.0 |> byte
+    let toByte c = Math.clamp c * 255.0 |> byte
     let width = resH bitmap.resolution
     let writePixel (image: Image<Rgba32>) (index: int) (Colour (r, g, b)) =
         let x, y = index % width, index / width
@@ -68,18 +65,20 @@ let createPlane camera resolution =
         topLeft = (-width / 2.0 + pixelWidth / 2.0, height / 2.0 - pixelHeight / 2.0)
     }
 
-let rayThroughPixel imagePlane (pixel : int * int) (jitter : float * float) =
-    let (cx, cy) = (fst imagePlane.topLeft + float (fst pixel) * fst imagePlane.pixelSize, snd imagePlane.topLeft - float (snd pixel) * snd imagePlane.pixelSize)
-    let (jx, jy) = (cx + fst jitter * fst imagePlane.pixelSize, cy + snd jitter * snd imagePlane.pixelSize)
+let rayThroughPixel imagePlane (PixelCoord (px, py)) (JitterOffset (jitterX, jitterY)) =
+    let (originX, originY) = imagePlane.topLeft
+    let (pwidth, pheight) = imagePlane.pixelSize
+    let (centreX, centreY) = (originX + float px * pwidth, originY - float py * pheight)
+    let (jx, jy) = (centreX + jitterX * pwidth, centreY + jitterY * pheight)
     let via = imagePlane.originToCentre + jx * imagePlane.i + jy * imagePlane.j
     { o = imagePlane.origin; d = via }
 
 let generateRays camera samplesPerPixel resolution =
     let imagePlane = createPlane camera resolution
-    let coords = seq { for y in 0..(resV resolution - 1) do for x in 0..(resH resolution - 1) -> (x, y) }
-    // let getRays coord = List.singleton <| rayThroughPixel imagePlane coord
     let random = System.Random()
-    let getRays coord =
-        let jitters = List.init samplesPerPixel (fun _ -> (random.NextDouble() - 0.5, random.NextDouble() - 0.5))
-        List.map (fun jitter -> rayThroughPixel imagePlane coord jitter) jitters
-    Seq.map (fun coord -> (coord, getRays coord)) coords
+    let jitterPattern sampleCount = Jitter.pattern random Jitter.circle sampleCount
+    let pixels = seq { for y in 0..(resV resolution - 1) do for x in 0..(resH resolution - 1) -> PixelCoord (x, y) }
+    let jitterPatterns = let pattern = jitterPattern samplesPerPixel in Seq.initInfinite (fun _ -> pattern)
+    let pixelRays (pixel, jitterPattern) =
+        pixel, List.map (fun jitter -> rayThroughPixel imagePlane pixel jitter) jitterPattern
+    Seq.map pixelRays <| Seq.zip pixels jitterPatterns

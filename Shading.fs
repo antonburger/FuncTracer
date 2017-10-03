@@ -113,7 +113,7 @@ let rec getColourForRay shader scene recursionLimit ray =
     createFragments getColourForDirection scene ray |>
     Seq.sumBy shader 
 
-let shade (shader:Shader) scene (pixelRays : seq<(int * int) * Ray list>) = 
+let shade (shader:Shader) scene (pixelRays : seq<PixelCoord * Ray list>) = 
     let push a b = (a,b)
     let shadePixel =  Seq.averageBy (getColourForRay shader scene 8)
     Seq.map (fun pixelRay -> async { return (fst pixelRay, shadePixel <| snd pixelRay) }) pixelRays |> Async.Parallel |> Async.RunSynchronously 

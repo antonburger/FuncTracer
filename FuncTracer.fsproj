@@ -15,6 +15,7 @@
     <Compile Include="Cone.fs" />
     <Compile Include="Cylinder.fs" />
     <Compile Include="Plane.fs" />
+    <Compile Include="Jitter.fs" />
     <Compile Include="Image.fs" />
     <Compile Include="Scene.fs" />
     <Compile Include="SceneParser.fs" />
