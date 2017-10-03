@@ -4,12 +4,6 @@ open Light
 open Ray
 open Image
 
-module Seq = 
-    let firstOrNone seq = 
-        if Seq.isEmpty seq
-            then None
-            else Some <| Seq.head seq
-
 type SceneOptions = {
     camera : Camera;
     multisampleCount : int;
@@ -46,7 +40,7 @@ let sortByDistance =
     Seq.sortBy rayDistance >>
     Seq.skipWhile (rayDistance >> (>) 0.0)
 
-let closest = sortByDistance >> Seq.firstOrNone
+let closest = sortByDistance >> Seq.tryHead
 
 let getAllIntersections ({ objects = objects }) r =
     let flip f = fun x y -> f y x
