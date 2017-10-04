@@ -28,4 +28,4 @@ type private Cone() =
             Seq.map intersection |>
             Seq.filter (fun { p = Point(_, py, _) } -> py >= 0.0 && py <= 1.0)
 
-let cone = Cone() :> Intersectable
+let cone = Cone() |> toIntersectableFunc

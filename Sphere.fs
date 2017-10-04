@@ -16,4 +16,4 @@ type private Sphere() =
             Math.quadratic a b c |>
             Seq.map intersection
 
-let sphere = Sphere() :> Intersectable
+let sphere = Sphere() |> toIntersectableFunc

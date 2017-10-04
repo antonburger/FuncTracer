@@ -21,13 +21,14 @@ type private Cylinder() =
             Seq.map intersection |>
             Seq.filter (fun { p = Point(_, py, _) } -> py >= 0.0 && py <= 1.0)
 
+let cylinder = Cylinder() |> toIntersectableFunc
 
 type private Circle() = 
     interface Intersectable with
         member this.Intersect r = 
             let plane = plane Point.Zero (Vector(0.0,1.0,0.0))
             intersect plane r |> Seq.filter (fun v -> (v.p-Point.Zero).Length<1.0)
-let circle = Circle() :> Intersectable
+let circle = Circle() |> toIntersectableFunc
 
 open Transform
 type private SolidCylinder() = 
@@ -35,8 +36,7 @@ type private SolidCylinder() =
         member this.Intersect r = 
             let top = Transform.transform (translate (Vector(0.0,1.0,0.0))) circle
             let bottom = Transform.transform (rotate (Vector(0.0,0.0,1.0)) (Deg.toRad 180.0<deg>)) circle
-            [top; bottom; (Cylinder():>Intersectable)] 
-            |> Seq.collect (fun v->v.Intersect r)
+            [top; bottom; cylinder ]
+            |> Seq.collect (fun v->v r)
 
-let cylinder = Cylinder() :> Intersectable
-let solidCylinder = SolidCylinder() :> Intersectable
+let solidCylinder = SolidCylinder() |> toIntersectableFunc

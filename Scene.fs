@@ -17,11 +17,9 @@ with static member Default = {
 
 
 type Material = { colour:Colour; reflectance: float; shineyness: float }
-type SceneObject(geometry: Intersectable, material: Material) =
+type SceneObject(geometry: IntersectableFunc, material: Material) =
     member this.Geometry = geometry
     member this.Material = material
-    interface Intersectable with
-        member this.Intersect r = this.Geometry.Intersect r
 
 type Scene = {
     objects: SceneObject list;
@@ -45,7 +43,7 @@ let closest = sortByDistance >> Seq.tryHead
 let getAllIntersections ({ objects = objects }) r =
     let flip f = fun x y -> f y x
     objects |> Seq.collect ( 
-                fun obj -> flip intersect r obj 
+                fun obj -> obj.Geometry r
                         |> Seq.map(fun v->{intersection=v; sceneObject=obj})
         ) 
 
@@ -55,5 +53,5 @@ let intersectScene scene  = getAllIntersections scene >>  closest
 let intersectsAny ({ objects = objects }) r =
     let flip f = fun x y -> f y x
     objects |>
-    Seq.collect (flip intersect r) |>
+    Seq.collect ( (fun v->v.Geometry r)) |>
     Seq.exists (fun i -> i.t >= 0.0)

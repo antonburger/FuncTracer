@@ -20,4 +20,4 @@ type private Plane(p0 : Point, n : Vector) =
                 let t = num / denom
                 seq [ { t = t; p = r.o + t * r.d; n = this.N } ]
 
-let plane p0 n = Plane(p0, n) :> Intersectable
+let plane p0 n = Plane(p0, n) |> toIntersectableFunc

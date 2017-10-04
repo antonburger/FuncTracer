@@ -119,7 +119,7 @@ module Parsers =
                 factory
         pkeyword "plane" plane
 
-    let namedPrimitive name value = skipStringCI name |>> (fun()->value:>Intersectable)
+    let namedPrimitive name value = skipStringCI name |>> (fun()->value)
 
     let primitive = psphere <|> pplane <|> pcylinder <|> pcone <|> psolidCylinder <|>
                     namedPrimitive "circle" circle <|>
@@ -161,7 +161,7 @@ module Parsers =
         let argument = inBrackets transformFunction <|> primitive
 
         let factory object1 object2=
-            f object1 object2 :> Intersectable
+            f object1 object2 
         let objects =
             pipe2
                 (argument .>> ws1)
@@ -170,12 +170,12 @@ module Parsers =
         pkeyword keyword objects 
 
 
-    let geometryFunction = 
-             binaryGeometryFunction "union"     Geometry.union     <|>
-             binaryGeometryFunction "subtract"  Geometry.subtract  <|>
-             binaryGeometryFunction "intersect" Geometry.intersect <|>
-             binaryGeometryFunction "exclude"   Geometry.exclude   <|>
-             transformFunction 
+    let geometryFunction =
+        binaryGeometryFunction "union" Geometry.union         <|>
+        binaryGeometryFunction "subtract"  Geometry.subtract  <|>
+        binaryGeometryFunction "intersect" Geometry.intersect <|>
+        binaryGeometryFunction "exclude"   Geometry.exclude   <|>
+        transformFunction 
     let pGeometry =  inBrackets geometryFunction <|> primitive
 
     let pobject = 

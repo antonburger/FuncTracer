@@ -16,7 +16,7 @@ type private Square() =
                 (x>=0.0) && (x<=1.0) && (z>=0.0) && (z<=1.0)
                 )
 
-let square = Square():>Intersectable
+let square = Square()|>toIntersectableFunc
 
 let cube = 
     let bottom = flipNormals square
