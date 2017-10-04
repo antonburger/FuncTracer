@@ -21,6 +21,7 @@ type Cylinder() =
             Seq.map intersection |>
             Seq.filter (fun { p = Point(_, py, _) } -> py >= 0.0 && py <= 1.0)
 
+
 type Circle() = 
     interface Intersectable with
         member this.Intersect r = 
@@ -35,3 +36,7 @@ type SolidCylinder() =
             let bottom = TransformedObject(Circle(), rotate (Vector(0.0,0.0,1.0)) (Deg.toRad 180.0<deg>)) :> Intersectable
             [top; bottom; (Cylinder():>Intersectable)] 
             |> Seq.collect (fun v->v.Intersect r)
+
+let cylinder = Cylinder() :> Intersectable
+let circle = Circle() :> Intersectable
+let solidCylinder = SolidCylinder() :> Intersectable

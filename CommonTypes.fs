@@ -64,6 +64,10 @@ module Vector =
 
     let reflect (n:Vector) (v:Vector) = v-(2.0*(v.*n)*n)
 
+    let unitX = Vector(1.0,0.0,0.0)
+    let unitY = Vector(0.0,1.0,0.0)
+    let unitZ = Vector(0.0,0.0,1.0)
+
 
 module Point =
     let toVector (Point (x, y, z)) =

@@ -86,3 +86,21 @@ type TransformedObject(underlyingObject : Intersectable, transform : Transform) 
         member this.Intersect r =
             let r' = { o = worldToModel * r.o; d = worldToModel * r.d }
             intersect underlyingObject r' |> Seq.map (fun ix -> { ix with p = modelToWorld * ix.p; n = normalToWorld * ix.n |> normalise })
+
+let transform t o = TransformedObject(o, t)   :> Intersectable
+            
+
+            
+
+            
+
+            
+
+            
+
+            
+
+            
+
+            
+

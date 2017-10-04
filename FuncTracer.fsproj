@@ -15,6 +15,7 @@
     <Compile Include="Sphere.fs" />
     <Compile Include="Cone.fs" />
     <Compile Include="Cylinder.fs" />
+    <Compile Include="Cube.fs" />
     <Compile Include="Jitter.fs" />
     <Compile Include="Image.fs" />
     <Compile Include="Scene.fs" />

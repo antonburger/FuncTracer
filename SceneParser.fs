@@ -16,6 +16,7 @@ open Geometry
 open Ray
 
 module Parsers =
+    open Cube
     let private ws = skipMany (skipAnyOf [| ' '; '\t' |] <??> "space or tab")
     let private ws1 = skipMany1 (skipAnyOf [| ' '; '\t' |] <??> "space or tab")
     let private skipComment = skipChar '#' >>. skipRestOfLine true <?> "comment"
@@ -121,7 +122,10 @@ module Parsers =
     let namedPrimitive name value = skipStringCI name |>> (fun()->value:>Intersectable)
 
     let primitive = psphere <|> pplane <|> pcylinder <|> pcone <|> psolidCylinder <|>
-                    namedPrimitive "circle" (Circle())
+                    namedPrimitive "circle" circle <|>
+                    namedPrimitive "square" square <|>
+                    namedPrimitive "cube" cube 
+
     let scaleFunction = 
         let factory (x,y,z) object =TransformedObject(object, scale (x,y,z)) :> Intersectable
         let arguments = 
@@ -131,27 +135,27 @@ module Parsers =
                 factory
         pkeyword "scale" arguments
 
-    let translateFunction = 
-        let factory (x,y,z) object =TransformedObject(object, translate (Vector (x,y,z))) :> Intersectable
-        let arguments = 
-            pipe2
-                (ptriple .>> ws1)
-                primitive
-                factory
-        pkeyword "translate" arguments
 
     let rotateFunction = 
         let factory (x,y,z) angle object =
-            let rotation = rotate (Vector (x,y,z)) (angle*1.0<rad>)
+            let rotation = rotate (Vector (x,y,z)) (Deg.toRad (angle*1.0<deg>))
             (TransformedObject(object, rotation) :> Intersectable)
         let arguments = 
             pipe3
                 (ptriple .>> ws1)
                 (pfloat .>> ws1)
-                primitive
+                (primitive <|> inBrackets scaleFunction)
                 factory
         pkeyword "rotate" arguments
 
+    let translateFunction = 
+        let factory (x,y,z) object =TransformedObject(object, translate (Vector (x,y,z))) :> Intersectable
+        let arguments = 
+            pipe2
+                (ptriple .>> ws1)
+                (primitive <|> inBrackets (rotateFunction <|> scaleFunction))
+                factory
+        pkeyword "translate" arguments
     let transformFunction = scaleFunction <|> translateFunction <|> rotateFunction
 
     let binaryGeometryFunction keyword f = 
