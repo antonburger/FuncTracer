@@ -63,7 +63,7 @@ module Parsers =
         let factory centre radius =
             // TODO: Allow arbitrary transforms. This was just the easiest way to prove the transforms without changing the file format :P
             let transform = compose [scale (radius, radius, radius); translate (Vector centre)]
-            TransformedObject(Sphere(), transform) :> Intersectable
+            Transform.transform transform sphere
         let sphere =
             pipe2
                 (pkeyword "pos" ptriple .>> ws1)
@@ -75,7 +75,7 @@ module Parsers =
         let factory centre radius height =
             // TODO: Allow arbitrary transforms. This was just the easiest way to prove the transforms without changing the file format :P
             let transform = compose [scale (radius, height, radius); translate (Vector centre)]
-            TransformedObject(Cylinder(), transform) :> Intersectable
+            Transform.transform transform cylinder
         let cylinder =
             pipe3
                 (pkeyword "pos" (ptriple .>> ws1))
@@ -87,7 +87,7 @@ module Parsers =
     let psolidCylinder =
         let factory centre radius height =
             let transform = compose [scale (radius, height, radius); translate (Vector centre)]
-            TransformedObject(SolidCylinder(), transform) :> Intersectable
+            Transform.transform transform solidCylinder 
         let cylinder =
             pipe3
                 (pkeyword "pos" (ptriple .>> ws1))
@@ -100,7 +100,7 @@ module Parsers =
         let factory centre radius height =
             // TODO: Allow arbitrary transforms. This was just the easiest way to prove the transforms without changing the file format :P
             let transform = compose [scale (radius, height, radius); translate (Vector centre)]
-            TransformedObject(Cone(), transform):> Intersectable
+            Transform.transform transform cone
         let cone =
             pipe3
                 (pkeyword "pos" (ptriple .>> ws1))
@@ -110,7 +110,7 @@ module Parsers =
         pkeyword "cone" cone
 
     let pplane =
-        let factory point normal = Plane(Point point, Vector normal |> normalise) :> Intersectable
+        let factory point normal = plane (Point point) (Vector normal |> normalise) 
 
         let plane =
             pipe2
@@ -127,7 +127,7 @@ module Parsers =
                     namedPrimitive "cube" cube 
 
     let scaleFunction = 
-        let factory (x,y,z) object =TransformedObject(object, scale (x,y,z)) :> Intersectable
+        let factory (x,y,z) object = transform (scale (x,y,z)) object 
         let arguments = 
             pipe2
                 (ptriple .>> ws1)
@@ -135,11 +135,10 @@ module Parsers =
                 factory
         pkeyword "scale" arguments
 
-
     let rotateFunction = 
         let factory (x,y,z) angle object =
             let rotation = rotate (Vector (x,y,z)) (Deg.toRad (angle*1.0<deg>))
-            (TransformedObject(object, rotation) :> Intersectable)
+            transform rotation object 
         let arguments = 
             pipe3
                 (ptriple .>> ws1)
@@ -149,7 +148,7 @@ module Parsers =
         pkeyword "rotate" arguments
 
     let translateFunction = 
-        let factory (x,y,z) object =TransformedObject(object, translate (Vector (x,y,z))) :> Intersectable
+        let factory (x,y,z) object =Transform.transform (translate (Vector (x,y,z))) object
         let arguments = 
             pipe2
                 (ptriple .>> ws1)

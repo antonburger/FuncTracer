@@ -3,7 +3,7 @@ module Cone
 open Ray
 open Vector
 
-type Cone() =
+type private Cone() =
     interface Intersectable with
         member this.Intersect r =
             let { o = Point (ox, oy, oz); d = Vector (dx, dy, dz) } = r
@@ -28,3 +28,4 @@ type Cone() =
             Seq.map intersection |>
             Seq.filter (fun { p = Point(_, py, _) } -> py >= 0.0 && py <= 1.0)
 
+let cone = Cone() :> Intersectable

@@ -77,7 +77,7 @@ let transpose (Matrix m) =
 let inverseTranspose =
     inverse >> matrix >> transpose
 
-type TransformedObject(underlyingObject : Intersectable, transform : Transform) =
+type private TransformedObject(underlyingObject : Intersectable, transform : Transform) =
     let underlyingObject = underlyingObject
     let modelToWorld = matrix transform
     let worldToModel = matrix (inverse transform)

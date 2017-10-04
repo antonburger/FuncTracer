@@ -4,7 +4,7 @@ open Ray
 open Vector
 
 // Plane equation: (p - p0).n = 0
-type Plane(p0 : Point, n : Vector) =
+type private Plane(p0 : Point, n : Vector) =
     member this.P0 = p0
     member this.N = normalise n
     interface Intersectable with
@@ -20,4 +20,4 @@ type Plane(p0 : Point, n : Vector) =
                 let t = num / denom
                 seq [ { t = t; p = r.o + t * r.d; n = this.N } ]
 
-let plane p0 n = Plane(p0, n)
+let plane p0 n = Plane(p0, n) :> Intersectable

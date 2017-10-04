@@ -3,7 +3,7 @@ module Sphere
 open Ray
 open Vector
 
-type Sphere() =
+type private Sphere() =
     interface Intersectable with
         member this.Intersect r =
             let ov = Point.toVector r.o
@@ -15,3 +15,5 @@ type Sphere() =
                 { t = t; p = p; n = Point.toVector p |> normalise }
             Math.quadratic a b c |>
             Seq.map intersection
+
+let sphere = Sphere() :> Intersectable

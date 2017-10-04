@@ -5,7 +5,7 @@ open Vector
 open Plane
 open Point
 
-type Cylinder() =
+type private Cylinder() =
     interface Intersectable with
         member this.Intersect r =
             let (Point (ox, oy, oz)) = r.o
@@ -22,21 +22,21 @@ type Cylinder() =
             Seq.filter (fun { p = Point(_, py, _) } -> py >= 0.0 && py <= 1.0)
 
 
-type Circle() = 
+type private Circle() = 
     interface Intersectable with
         member this.Intersect r = 
             let plane = plane Point.Zero (Vector(0.0,1.0,0.0))
             intersect plane r |> Seq.filter (fun v -> (v.p-Point.Zero).Length<1.0)
+let circle = Circle() :> Intersectable
 
 open Transform
-type SolidCylinder() = 
+type private SolidCylinder() = 
     interface Intersectable with
         member this.Intersect r = 
-            let top = TransformedObject(Circle(), translate (Vector(0.0,1.0,0.0))) :> Intersectable
-            let bottom = TransformedObject(Circle(), rotate (Vector(0.0,0.0,1.0)) (Deg.toRad 180.0<deg>)) :> Intersectable
+            let top = Transform.transform (translate (Vector(0.0,1.0,0.0))) circle
+            let bottom = Transform.transform (rotate (Vector(0.0,0.0,1.0)) (Deg.toRad 180.0<deg>)) circle
             [top; bottom; (Cylinder():>Intersectable)] 
             |> Seq.collect (fun v->v.Intersect r)
 
 let cylinder = Cylinder() :> Intersectable
-let circle = Circle() :> Intersectable
 let solidCylinder = SolidCylinder() :> Intersectable
