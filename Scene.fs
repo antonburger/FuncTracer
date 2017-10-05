@@ -50,8 +50,8 @@ let getAllIntersections ({ objects = objects }) r =
 let intersectScene scene  = getAllIntersections scene >>  closest
 
 // Just look for *an* intersection. Not interested in the closest one.
-let intersectsAny ({ objects = objects }) r =
+let intersectsAny ({ objects = objects }) maxDistance r =
     let flip f = fun x y -> f y x
     objects |>
     Seq.collect ( (fun v->v.Geometry r)) |>
-    Seq.exists (fun i -> i.t >= 0.0)
+    Seq.exists (fun i -> i.t >= 0.0 && i.t < maxDistance)

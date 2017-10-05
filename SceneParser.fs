@@ -239,8 +239,18 @@ module Parsers =
                 factory
         pkeyword "softdirectional" softDirectional
 
+    let ppositional =
+        let factory pos falloff colour = positional (Point pos) (Falloff falloff) (Colour colour)
+        let positional =
+            pipe3
+                (pkeyword "pos" (ptriple .>> ws1))
+                (pkeyword "falloff" (ptriple .>> ws1))
+                (pkeyword "colour" ptriple)
+                factory
+        pkeyword "positional" positional
+
     let plights =
-        let light = (pdirectional <|> psoftDirectional) .>> ws
+        let light = (pdirectional <|> psoftDirectional <|> ppositional) .>> ws
         sepEndBy light skipTrailingTrivia1
 
     let pscenegraph =
