@@ -1,14 +1,19 @@
 camera pos (0,5,-20) lookat (-2,0,0) up (0,1,0) fov 60 ratio 1
 samples 1
 
-(repeat 3 (rotate (0,1,0) 10) . (translate (-8,0,10))
+(repeat 3 (translate (-8,0,10)) . (hueshift 1) 
     (group
-        (subtract solidCylinder pos (0,0,0) radius 4 height 4 (scale (1.5,3,50) sphere pos (0,0,0) radius 1)) 
-        cone pos (0,4,0) radius 5 height 3 
-    )
-) diffuse (1,0,0) reflectance 0 shineyness 0
+        (material diffuse (0.39,0.58,0.92) reflectance 0 shineyness 0 
+            (subtract solidCylinder pos (0,0,0) radius 4 height 4 (scale (1.5,3,50) sphere pos (0,0,0) radius 1)) 
+        )
+        (material diffuse (1,0,0) reflectance 0 shineyness 0 
+            cone pos (0,4,0) radius 5 height 3 
+        )
+    )) 
 
-plane point (0,0,0) normal (0,1,0) diffuse (1,1,1) reflectance 0 shineyness 0
+(material  diffuse (1,1,1) reflectance 0 shineyness 0
+    plane point (0,0,0) normal (0,1,0) 
+)
 
 softdirectional dir (2,-1,1) samples 1 scatter 5 colour (0.8,0.8,0.8)
 positional pos (0.5,2,3) falloff (1,1,1) colour (1,1,1)

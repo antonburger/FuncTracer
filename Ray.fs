@@ -32,3 +32,8 @@ let rec private repeatLoop count f object objects=
 let repeat count f object = repeatLoop count f object [object] |> group
 
 let setMaterial material object = object >> Seq.map (fun v-> {v with material=material})
+
+let hueShift angle object = 
+    object >> Seq.map (fun v->{
+            v with material = { v.material with colour = Colour.hueShift angle v.material.colour }
+        })

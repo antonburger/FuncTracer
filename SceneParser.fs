@@ -110,7 +110,7 @@ module Parsers =
             pipe3
                 (pkeyword "pos" (ptriple .>> ws1))
                 (pkeyword "radius" (pnonNegativeNumber .>> ws1))
-                (pkeyword "height" (pnonNegativeNumber .>> ws1))
+                (pkeyword "height" pnonNegativeNumber)
                 factory
         pkeyword "cone" cone
 
@@ -120,7 +120,7 @@ module Parsers =
         let plane =
             pipe2
                 (pkeyword "point" (ptriple .>> ws1))
-                (pkeyword "normal" (ptriple .>> ws1))
+                (pkeyword "normal" ptriple)
                 factory
         pkeyword "plane" plane
 
@@ -131,11 +131,23 @@ module Parsers =
                     namedPrimitive "square" square <|>
                     namedPrimitive "cube" cube 
 
+    let hueShiftFunction:Parser<Geometry->Geometry, unit> = 
+        let factory angle = hueShift angle 
+        let arguments = 
+                pfloat |>> factory
+        pkeyword "hueShift" arguments
+
     let scaleFunction = 
         let factory (x,y,z) = transform (scale (x,y,z)) 
         let arguments = 
                 (ptriple .>> ws1) |>> factory
         pkeyword "scale" arguments
+
+    let materialFunction:Parser<Geometry->Geometry, unit> = 
+        let factory m = setMaterial m
+        let arguments = 
+                (pmaterial .>> anyWhitespace) |>> factory
+        pkeyword "material" arguments
 
     let rotateFunction = 
         let factory (x,y,z) angle =
@@ -181,7 +193,7 @@ module Parsers =
 
     let geometryFunction, geometryFunctionRef = createParserForwardedToRef<Geometry->Geometry, unit>()
 
-    let composedFunction = 
+    let composedFunction =  // BUG: Doesn't work without the brackets 
         pipe2 
             ((inBrackets geometryFunction) .>> anyWhitespace .>> pchar '.' .>> anyWhitespace)
             (inBrackets geometryFunction)
@@ -206,15 +218,11 @@ module Parsers =
         groupFunction<|>
         (applied  geometryFunction)
 
-    do geometryFunctionRef := repeatFunction <|> scaleFunction <|> translateFunction <|> rotateFunction <|> composedFunction
+    do geometryFunctionRef := hueShiftFunction <|> materialFunction <|> repeatFunction <|> scaleFunction <|> translateFunction <|> rotateFunction <|> composedFunction
     do geometryRef :=  primitive <|> inBrackets appliedFunction 
 
     let pobject = 
-        let factory geometry material = setMaterial material geometry
-        pipe2
-           (geometry .>> ws)
-           pmaterial
-           factory
+        (geometry .>> ws) |>> id
 
     let pobjects =
         sepEndBy pobject skipTrailingTrivia1

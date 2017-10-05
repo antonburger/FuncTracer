@@ -1,37 +1,35 @@
 camera pos (5.7,5.7,-5.7) lookat (0,0,4) up (0,1,0) fov 60 ratio 1
-samples 5
+samples 1
+(material diffuse (0.4,0.4,0.4) reflectance 0 shineyness 0 (subtract sphere pos (0,0,0) radius 11 sphere pos (0,0,0) radius 10))
 
-(subtract sphere pos (0,0,0) radius 11 sphere pos (0,0,0) radius 10) diffuse (0.4,0.4,0.4) reflectance 0 shineyness 0
+(material diffuse (1, 0, 0) reflectance 0.4 shineyness 10  (subtract  (translate (-2.6,  2.6, 0) cube) sphere pos (-2.6,  2.6, 0) radius 0.65))
+(material diffuse (1, 1, 0) reflectance 0.4 shineyness 10  (intersect (translate (-1.3,  2.6, 0) cube) sphere pos (-1.3,  2.6, 0) radius 0.65)) 
+(material diffuse (0, 1, 0) reflectance 0.4 shineyness 10  (subtract  (translate (0,     2.6, 0) cube) sphere pos (0,     2.6, 0) radius 0.65)) 
+(material diffuse (0, 1, 1) reflectance 0.4 shineyness 10  (intersect (translate (1.3,   2.6, 0) cube) sphere pos (1.3,   2.6, 0) radius 0.65)) 
+(material diffuse (0, 0, 1) reflectance 0.4 shineyness 10  (subtract  (translate (2.6,   2.6, 0) cube) sphere pos (2.6,   2.6, 0) radius 0.65)) 
 
-(subtract  (translate (-2.6,  2.6, 0) cube) sphere pos (-2.6,  2.6, 0) radius 0.65) diffuse (1, 0, 0) reflectance 0.4 shineyness 10
-(intersect (translate (-1.3,  2.6, 0) cube) sphere pos (-1.3,  2.6, 0) radius 0.65) diffuse (1, 1, 0) reflectance 0.4 shineyness 10
-(subtract  (translate (0,     2.6, 0) cube) sphere pos (0,     2.6, 0) radius 0.65) diffuse (0, 1, 0) reflectance 0.4 shineyness 10
-(intersect (translate (1.3,   2.6, 0) cube) sphere pos (1.3,   2.6, 0) radius 0.65) diffuse (0, 1, 1) reflectance 0.4 shineyness 10
-(subtract  (translate (2.6,   2.6, 0) cube) sphere pos (2.6,   2.6, 0) radius 0.65) diffuse (0, 0, 1) reflectance 0.4 shineyness 10
+(material diffuse (1, 0, 0) reflectance 0.4 shineyness 10  (intersect (translate (-2.6,  1.3, 0) cube) sphere pos (-2.6,  1.3, 0) radius 0.65)) 
+(material diffuse (1, 1, 0) reflectance 0.4 shineyness 10  (subtract  (translate (-1.3,  1.3, 0) cube) sphere pos (-1.3,  1.3, 0) radius 0.65)) 
+(material diffuse (0, 1, 0) reflectance 0.4 shineyness 10  (intersect (translate (0,     1.3, 0) cube) sphere pos (0,     1.3, 0) radius 0.65)) 
+(material diffuse (0, 1, 1) reflectance 0.4 shineyness 10  (subtract  (translate (1.3,   1.3, 0) cube) sphere pos (1.3,   1.3, 0) radius 0.65)) 
+(material diffuse (0, 0, 1) reflectance 0.4 shineyness 10  (intersect (translate (2.6,   1.3, 0) cube) sphere pos (2.6,   1.3, 0) radius 0.65)) 
 
-(intersect (translate (-2.6,  1.3, 0) cube) sphere pos (-2.6,  1.3, 0) radius 0.65) diffuse (1, 0, 0) reflectance 0.4 shineyness 10
-(subtract  (translate (-1.3,  1.3, 0) cube) sphere pos (-1.3,  1.3, 0) radius 0.65) diffuse (1, 1, 0) reflectance 0.4 shineyness 10
-(intersect (translate (0,     1.3, 0) cube) sphere pos (0,     1.3, 0) radius 0.65) diffuse (0, 1, 0) reflectance 0.4 shineyness 10
-(subtract  (translate (1.3,   1.3, 0) cube) sphere pos (1.3,   1.3, 0) radius 0.65) diffuse (0, 1, 1) reflectance 0.4 shineyness 10
-(intersect (translate (2.6,   1.3, 0) cube) sphere pos (2.6,   1.3, 0) radius 0.65) diffuse (0, 0, 1) reflectance 0.4 shineyness 10
+(material diffuse (1, 0, 0) reflectance 0.4 shineyness 10  (subtract  (translate (-2.6,    0, 0) cube) sphere pos (-2.6,    0, 0) radius 0.65)) 
+(material diffuse (1, 1, 0) reflectance 0.4 shineyness 10  (intersect (translate (-1.3,    0, 0) cube) sphere pos (-1.3,    0, 0) radius 0.65)) 
+(material diffuse (0, 1, 0) reflectance 0.4 shineyness 10  (subtract  (translate (0,       0, 0) cube) sphere pos (0,       0, 0) radius 0.65)) 
+(material diffuse (0, 1, 1) reflectance 0.4 shineyness 10  (intersect (translate (1.3,     0, 0) cube) sphere pos (1.3,     0, 0) radius 0.65)) 
+(material diffuse (0, 0, 1) reflectance 0.4 shineyness 10  (subtract  (translate (2.6,     0, 0) cube) sphere pos (2.6,     0, 0) radius 0.65)) 
 
-(subtract  (translate (-2.6,    0, 0) cube) sphere pos (-2.6,    0, 0) radius 0.65) diffuse (1, 0, 0) reflectance 0.4 shineyness 10
-(intersect (translate (-1.3,    0, 0) cube) sphere pos (-1.3,    0, 0) radius 0.65) diffuse (1, 1, 0) reflectance 0.4 shineyness 10
-(subtract  (translate (0,       0, 0) cube) sphere pos (0,       0, 0) radius 0.65) diffuse (0, 1, 0) reflectance 0.4 shineyness 10
-(intersect (translate (1.3,     0, 0) cube) sphere pos (1.3,     0, 0) radius 0.65) diffuse (0, 1, 1) reflectance 0.4 shineyness 10
-(subtract  (translate (2.6,     0, 0) cube) sphere pos (2.6,     0, 0) radius 0.65) diffuse (0, 0, 1) reflectance 0.4 shineyness 10
+(material diffuse (1, 0, 0) reflectance 0.4 shineyness 10  (intersect (translate (-2.6, -1.3, 0) cube) sphere pos (-2.6, -1.3, 0) radius 0.65)) 
+(material diffuse (1, 1, 0) reflectance 0.4 shineyness 10  (subtract  (translate (-1.3, -1.3, 0) cube) sphere pos (-1.3, -1.3, 0) radius 0.65)) 
+(material diffuse (0, 1, 0) reflectance 0.4 shineyness 10  (intersect (translate (0,    -1.3, 0) cube) sphere pos (0,    -1.3, 0) radius 0.65)) 
+(material diffuse (0, 1, 1) reflectance 0.4 shineyness 10  (subtract  (translate (1.3,  -1.3, 0) cube) sphere pos (1.3,  -1.3, 0) radius 0.65)) 
+(material diffuse (0, 0, 1) reflectance 0.4 shineyness 10  (intersect (translate (2.6,  -1.3, 0) cube) sphere pos (2.6,  -1.3, 0) radius 0.65)) 
 
-(intersect (translate (-2.6, -1.3, 0) cube) sphere pos (-2.6, -1.3, 0) radius 0.65) diffuse (1, 0, 0) reflectance 0.4 shineyness 10
-(subtract  (translate (-1.3, -1.3, 0) cube) sphere pos (-1.3, -1.3, 0) radius 0.65) diffuse (1, 1, 0) reflectance 0.4 shineyness 10
-(intersect (translate (0,    -1.3, 0) cube) sphere pos (0,    -1.3, 0) radius 0.65) diffuse (0, 1, 0) reflectance 0.4 shineyness 10
-(subtract  (translate (1.3,  -1.3, 0) cube) sphere pos (1.3,  -1.3, 0) radius 0.65) diffuse (0, 1, 1) reflectance 0.4 shineyness 10
-(intersect (translate (2.6,  -1.3, 0) cube) sphere pos (2.6,  -1.3, 0) radius 0.65) diffuse (0, 0, 1) reflectance 0.4 shineyness 10
-
-(subtract  (translate (-2.6, -2.6, 0) cube) sphere pos (-2.6, -2.6, 0) radius 0.65) diffuse (1, 0, 0) reflectance 0.4 shineyness 10
-(intersect (translate (-1.3, -2.6, 0) cube) sphere pos (-1.3, -2.6, 0) radius 0.65) diffuse (1, 1, 0) reflectance 0.4 shineyness 10
-(subtract  (translate (0,    -2.6, 0) cube) sphere pos (0,    -2.6, 0) radius 0.65) diffuse (0, 1, 0) reflectance 0.4 shineyness 10
-(intersect (translate (1.3,  -2.6, 0) cube) sphere pos (1.3,  -2.6, 0) radius 0.65) diffuse (0, 1, 1) reflectance 0.4 shineyness 10
-(subtract  (translate (2.6,  -2.6, 0) cube) sphere pos (2.6,  -2.6, 0) radius 0.65) diffuse (0, 0, 1) reflectance 0.4 shineyness 10
+(material diffuse (1, 0, 0) reflectance 0.4 shineyness 10  (subtract  (translate (-2.6, -2.6, 0) cube) sphere pos (-2.6, -2.6, 0) radius 0.65)) 
+(material diffuse (1, 1, 0) reflectance 0.4 shineyness 10  (intersect (translate (-1.3, -2.6, 0) cube) sphere pos (-1.3, -2.6, 0) radius 0.65)) 
+(material diffuse (0, 1, 0) reflectance 0.4 shineyness 10  (subtract  (translate (0,    -2.6, 0) cube) sphere pos (0,    -2.6, 0) radius 0.65)) 
+(material diffuse (0, 1, 1) reflectance 0.4 shineyness 10  (intersect (translate (1.3,  -2.6, 0) cube) sphere pos (1.3,  -2.6, 0) radius 0.65)) 
+(material diffuse (0, 0, 1) reflectance 0.4 shineyness 10  (subtract  (translate (2.6,  -2.6, 0) cube) sphere pos (2.6,  -2.6, 0) radius 0.65)) 
 
 positional pos (0,0,-8) falloff (1,0.01,0.02) colour (1,1,1)
-positional pos (0,0,8) falloff (1,0.01,0.02) colour (1,1,1)

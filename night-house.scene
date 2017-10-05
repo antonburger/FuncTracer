@@ -1,34 +1,47 @@
 camera pos (15,11,-20) lookat (-2,0,0) up (0,1,0) fov 60 ratio 1
-samples 5
+samples 1
 
 # House
-(subtract solidCylinder pos (0,0,0) radius 4 height 4 (scale (1.5,3,50) sphere pos (0,0,0) radius 1)) diffuse (1,0,0) reflectance 0 shineyness 0
+(material diffuse (1,0,0) reflectance 0 shineyness 0
+    (subtract solidCylinder pos (0,0,0) radius 4 height 4 (scale (1.5,3,50) sphere pos (0,0,0) radius 1)) 
+)
 #solidCylinder pos (0,0,0) radius 4 height 4 diffuse (1,0,0) reflectance 0 shineyness 0
-cone pos (0,4,0) radius 5 height 3 diffuse (0.39,0.58,0.92) reflectance 0 shineyness 0
+(material  diffuse (0.39,0.58,0.92) reflectance 0 shineyness 0
+    cone pos (0,4,0) radius 5 height 3
+)
 
 # Fence
-solidCylinder pos (-2.0,0,-5.0) radius 0.1 height 1.5 diffuse (0,1,1) reflectance 0.5 shineyness 0
-solidCylinder pos (-2.4,0,-6.0) radius 0.1 height 1.5 diffuse (0,1,1) reflectance 0.5 shineyness 0
-solidCylinder pos (-2.7,0,-7.0) radius 0.1 height 1.5 diffuse (0,1,1) reflectance 0.5 shineyness 0
-solidCylinder pos (-3.1,0,-8.0) radius 0.1 height 1.5 diffuse (0,1,1) reflectance 0.5 shineyness 0
-solidCylinder pos (-3.5,0,-9.0) radius 0.1 height 1.5 diffuse (0,1,1) reflectance 0.5 shineyness 0
-solidCylinder pos (-3.8,0,-10.0) radius 0.1 height 1.5 diffuse (0,1,1) reflectance 0.5 shineyness 0
-solidCylinder pos (-4.2,0,-11.0) radius 0.1 height 1.5 diffuse (0,1,1) reflectance 0.5 shineyness 0
-solidCylinder pos (-4.5,0,-12.0) radius 0.1 height 1.5 diffuse (0,1,1) reflectance 0.5 shineyness 0
+(material diffuse (0,1,1) reflectance 0.5 shineyness 0
+    (repeat 8 translate (-0.4,0,-1)
+        solidCylinder pos (-2.0,0,-5.0) radius 0.1 height 1.5
+    )
+)
 
 # Tree 1
-cylinder pos (-8,0,-5) radius 0.5 height 4 diffuse (0.65,0.17,0.17) reflectance 0 shineyness 0
-sphere pos (-8,7,-5) radius 3 diffuse (0,1,0) reflectance 0 shineyness 0
-sphere pos (-6, 7, -7) radius 0.5 diffuse (1,1,0) reflectance 1 shineyness 0
-sphere pos (-6, 9, -5) radius 0.5 diffuse (1,1,0) reflectance 1 shineyness 0
+(material diffuse (0.65,0.17,0.17) reflectance 0 shineyness 0
+    cylinder pos (-8,0,-5) radius 0.5 height 4 
+)    
+(material diffuse (0,1,0) reflectance 0 shineyness 0
+    (group
+        sphere pos (-8,7,-5) radius 3
+        sphere pos (-6, 7, -7) radius 0.5
+        sphere pos (-6, 9, -5) radius 0.5
+    )
+)
 
 # Crates
-(translate (-5.5, 0.5, -4.0) cube) diffuse (0.65,0.17,0.17) reflectance 0 shineyness 0
-(translate (-4.8, 1.5, -4.0) (rotate (0,1,0) 10 cube)) diffuse (0.65,0.17,0.17) reflectance 0 shineyness 0
-(translate (-4.1, 0.5, -4.3) (rotate (0,1,0) 0 cube)) diffuse (0.65,0.17,0.17) reflectance 0 shineyness 0
+(material diffuse (0.65,0.17,0.17) reflectance 0 shineyness 0
+(translate (9,0,0)
+(group 
+    (translate (-5.5, 0.5, -4.0) cube) 
+    (translate (-4.8, 1.5, -4.0) (rotate (0,1,0) 10 cube)) 
+    (translate (-4.1, 0.5, -4.3) (rotate (0,1,0) 0 cube)) 
+)))
 
-plane point (0,0,0) normal (0,1,0) diffuse (1,1,1) reflectance 0 shineyness 0
+(material diffuse (1,1,1) reflectance 0 shineyness 0
+    plane point (0,0,0) normal (0,1,0) 
+)
 
-softdirectional dir (2,-1,1) samples 20 scatter 5 colour (0.1,0.1,0.1)
+softdirectional dir (2,-1,1) samples 1 scatter 5 colour (0.1,0.1,0.1)
 positional pos (0.5,2,2) falloff (1,0.01,0.02) colour (0.7,0.7,0.2)
 positional pos (-6,2.9,-6) falloff (1,0.01,0.02) colour (0.7,0.7,0.7)

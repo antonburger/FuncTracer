@@ -68,6 +68,8 @@ module Colour =
     let inline greyScale g = let c = float g in Colour (c, c, c)
     let map f (Colour (r, g, b)) = Colour (f r, f g, f b)
 
+    let hueShift angle (Colour (r,g,b)) = Colour (b,r,g) // Lol no
+
     let black = fromRGB 0 0 0
     let white = fromRGB 1 1 1
     let red = fromRGB 1 0 0
