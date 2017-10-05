@@ -41,6 +41,13 @@ type Colour = Colour of (float * float * float) with
 [<Measure>] type deg
 
 module Vector =
+    let unitX = Vector(1.0,0.0,0.0)
+    let unitY = Vector(0.0,1.0,0.0)
+    let unitZ = Vector(0.0,0.0,1.0)
+    let getX (Vector (x, _, _)) = x
+    let getY (Vector (_, y, _)) = y
+    let getZ (Vector (_, _, z)) = z
+
     let normalise (v : Vector) =
         let l = v.Length
         if l < 0.0000001
@@ -50,24 +57,7 @@ module Vector =
     let toPoint (Vector (x, y, z)) =
         Point (x, y, z)
 
-
-    let jitter count (maxAngle : float<rad>) vector =  
-        let random = System.Random()
-        let normalised = normalise vector
-        let maxOffsetMagnitude = tan (maxAngle/2.0<rad>)
-        // Just going to hope the random vector isn't parallel
-        let randomPerpendicularVector v = Vector(random.NextDouble()-0.5, random.NextDouble()-0.5, random.NextDouble()-0.5).**v |> normalise
-        List.init count (fun _ -> 
-            let offsetMagnitude = random.NextDouble()*maxOffsetMagnitude
-            normalised+offsetMagnitude*(randomPerpendicularVector normalised) |> normalise
-        )
-
     let reflect (n:Vector) (v:Vector) = v-(2.0*(v.*n)*n)
-
-    let unitX = Vector(1.0,0.0,0.0)
-    let unitY = Vector(0.0,1.0,0.0)
-    let unitZ = Vector(0.0,0.0,1.0)
-
 
 module Point =
     let toVector (Point (x, y, z)) =

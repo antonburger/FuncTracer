@@ -1,0 +1,376 @@
+From 97f582fbd2a5151e42cdce86997cdac9c933ad7a Mon Sep 17 00:00:00 2001
+From: Unknown <mjrmua@gmail.com>
+Date: Wed, 4 Oct 2017 23:35:45 +0200
+Subject: [PATCH] Removed Intersectable
+
+---
+ Cone.fs      | 47 ++++++++++++++++++++++-------------------------
+ Cube.fs      | 22 +++++++++-------------
+ Cylinder.fs  | 53 ++++++++++++++++++++---------------------------------
+ Geometry.fs  | 56 ++++++++++++++++++++++++++------------------------------
+ Plane.fs     | 28 +++++++++++-----------------
+ Ray.fs       | 20 +++++---------------
+ Sphere.fs    | 24 ++++++++++--------------
+ Transform.fs | 12 +++---------
+ 8 files changed, 106 insertions(+), 156 deletions(-)
+
+diff --git a/Cone.fs b/Cone.fs
+index 23cff62..955e0cb 100644
+--- a/Cone.fs
++++ b/Cone.fs
+@@ -3,29 +3,26 @@ module Cone
+ open Ray
+ open Vector
+ 
+-type private Cone() =
+-    interface Intersectable with
+-        member this.Intersect r =
+-            let { o = Point (ox, oy, oz); d = Vector (dx, dy, dz) } = r
+-            // Perform some reference frame shenanigans here to make sure the
+-            // default "cone" consists only of the -y subset of the whole
+-            // surface, with the base at the origin and the apex at the top, 1
+-            // unit higher.
+-            // Start by shifting the ray's origin down by our canonical height,
+-            // before solving the intersection equation.
+-            let oy = oy - 1.0
+-            let a = dx * dx + dz * dz - dy * dy
+-            let b = 2.0 * (ox * dx + oz * dz - oy * dy)
+-            let c = ox * ox + oz * oz - oy * oy
+-            let intersection t =
+-                let (Point (px, py, pz)) = (Point (ox, oy, oz)) + t * r.d
+-                // Shift the intersected point back into the desired frame.
+-                let p = Point (px, py + 1.0, pz)
+-                // But leave the normal as is - not affected by translation.
+-                let n = Vector (px, -py, pz) |> normalise
+-                { t = t; p = p; n = if n .* r.d < 0.0 then n else -n }
+-            Math.quadratic a b c |>
+-            Seq.map intersection |>
+-            Seq.filter (fun { p = Point(_, py, _) } -> py >= 0.0 && py <= 1.0)
+ 
+-let cone = Cone() |> toIntersectableFunc
+\ No newline at end of file
++let cone r = 
++    let { o = Point (ox, oy, oz); d = Vector (dx, dy, dz) } = r
++    // Perform some reference frame shenanigans here to make sure the
++    // default "cone" consists only of the -y subset of the whole
++    // surface, with the base at the origin and the apex at the top, 1
++    // unit higher.
++    // Start by shifting the ray's origin down by our canonical height,
++    // before solving the intersection equation.
++    let oy = oy - 1.0
++    let a = dx * dx + dz * dz - dy * dy
++    let b = 2.0 * (ox * dx + oz * dz - oy * dy)
++    let c = ox * ox + oz * oz - oy * oy
++    let intersection t =
++        let (Point (px, py, pz)) = (Point (ox, oy, oz)) + t * r.d
++        // Shift the intersected point back into the desired frame.
++        let p = Point (px, py + 1.0, pz)
++        // But leave the normal as is - not affected by translation.
++        let n = Vector (px, -py, pz) |> normalise
++        { t = t; p = p; n = if n .* r.d < 0.0 then n else -n }
++    Math.quadratic a b c |>
++    Seq.map intersection |>
++    Seq.filter (fun { p = Point(_, py, _) } -> py >= 0.0 && py <= 1.0)
+\ No newline at end of file
+diff --git a/Cube.fs b/Cube.fs
+index 6157f16..7842d49 100644
+--- a/Cube.fs
++++ b/Cube.fs
+@@ -6,25 +6,21 @@ open Plane
+ open Point
+ open Transform
+ 
+-type private Square() = 
+-    interface Intersectable with
+-        member this.Intersect r = 
+-            let plane = plane Point.Zero (Vector(0.0,1.0,0.0))
+-            intersect plane r |> Seq.filter (
+-                fun v -> 
++
++let square r = r |> plane (Point (0.0,0.0,0.0)) (Vector (0.0,1.0,0.0)) |> 
++        Seq.filter (
++            fun v -> 
+                 let (Point(x,y,z)) = v.p
+                 (x>=0.0) && (x<=1.0) && (z>=0.0) && (z<=1.0)
+-                )
+-
+-let square = Square()|>toIntersectableFunc
++        )
+ 
+-let cube = 
++let cube r= 
+     let bottom = flipNormals square
+-    let top = transform (translate (Vector(0.0,1.0,0.0))) square
++    let top = transform (translate (Vector(0.0,1.0,0.0))) square 
+     let left = transform (rotate unitZ (Deg.toRad 90.0<deg>)) square
+     let right = flipNormals <| transform (translate unitX) left
+     let front = transform (rotate unitX (Deg.toRad -90.0<deg>)) square
+     let back = flipNormals <| transform (translate unitZ) front
+-    combine [bottom; top; left; right;front;back] 
+-    |> transform (translate (Vector(-0.5, -0.5, -0.5)))
++    let combined = combine [bottom; top; left; right;front;back] 
++    r |> (combined |> transform (translate (Vector(-0.5, -0.5, -0.5))))
+ 
+diff --git a/Cylinder.fs b/Cylinder.fs
+index 0aa4d35..592362e 100644
+--- a/Cylinder.fs
++++ b/Cylinder.fs
+@@ -4,39 +4,26 @@ open Ray
+ open Vector
+ open Plane
+ open Point
++ 
++ let cylinder r = 
++    let (Point (ox, oy, oz)) = r.o
++    let (Vector (dx, dy, dz)) = r.d
++    let a = dx * dx + dz * dz
++    let b = 2.0 * (ox * dx + oz * dz)
++    let c = ox * ox + oz * oz - 1.0
++    let intersection t =
++        let (Point (px, py, pz)) = r.o + t * r.d
++        let n = Vector (px, 0.0, pz) |> normalise
++        { t = t; p = Point (px, py, pz); n = if n .* r.d < 0.0 then n else -n }
++    Math.quadratic a b c |>
++    Seq.map intersection |>
++    Seq.filter (fun { p = Point(_, py, _) } -> py >= 0.0 && py <= 1.0)
+ 
+-type private Cylinder() =
+-    interface Intersectable with
+-        member this.Intersect r =
+-            let (Point (ox, oy, oz)) = r.o
+-            let (Vector (dx, dy, dz)) = r.d
+-            let a = dx * dx + dz * dz
+-            let b = 2.0 * (ox * dx + oz * dz)
+-            let c = ox * ox + oz * oz - 1.0
+-            let intersection t =
+-                let (Point (px, py, pz)) = r.o + t * r.d
+-                let n = Vector (px, 0.0, pz) |> normalise
+-                { t = t; p = Point (px, py, pz); n = if n .* r.d < 0.0 then n else -n }
+-            Math.quadratic a b c |>
+-            Seq.map intersection |>
+-            Seq.filter (fun { p = Point(_, py, _) } -> py >= 0.0 && py <= 1.0)
+-
+-let cylinder = Cylinder() |> toIntersectableFunc
+-
+-type private Circle() = 
+-    interface Intersectable with
+-        member this.Intersect r = 
+-            let plane = plane Point.Zero (Vector(0.0,1.0,0.0))
+-            intersect plane r |> Seq.filter (fun v -> (v.p-Point.Zero).Length<1.0)
+-let circle = Circle() |> toIntersectableFunc
++let circle r = plane (Point (0.0,0.0,0.0)) (Vector(0.0,1.0,0.0)) r |> Seq.filter (fun v -> (v.p-Point.Zero).Length<1.0)
+ 
+ open Transform
+-type private SolidCylinder() = 
+-    interface Intersectable with
+-        member this.Intersect r = 
+-            let top = Transform.transform (translate (Vector(0.0,1.0,0.0))) circle
+-            let bottom = Transform.transform (rotate (Vector(0.0,0.0,1.0)) (Deg.toRad 180.0<deg>)) circle
+-            [top; bottom; cylinder ]
+-            |> Seq.collect (fun v->v r)
+-
+-let solidCylinder = SolidCylinder() |> toIntersectableFunc
+\ No newline at end of file
++let solidCylinder r = 
++    let top = Transform.transform (translate (Vector(0.0,1.0,0.0))) circle
++    let bottom = Transform.transform (rotate (Vector(0.0,0.0,1.0)) (Deg.toRad 180.0<deg>)) circle
++    [top; bottom; cylinder ]
++    |> Seq.collect (fun v->v r)
+\ No newline at end of file
+diff --git a/Geometry.fs b/Geometry.fs
+index 62775f5..707e71c 100644
+--- a/Geometry.fs
++++ b/Geometry.fs
+@@ -68,35 +68,31 @@ let private getIntersectionType hitA inA inB =
+         | (true,false)  -> AIntoAB
+         | (false,false) -> OutsideIntoB
+ 
+-type ConstructedSolid (rules:CsgRules, a:IntersectableFunc, b: IntersectableFunc)  =
+-    interface Intersectable with 
+-        member this.Intersect r = 
+-            let tuplePush a b = b,a
+-            let aIntersections = a r |> Seq.map (tuplePush true) 
+-            let bIntersections = b r |> Seq.map (tuplePush false)  
+-            let merged = (Seq.concat [aIntersections;bIntersections])   
+-                            |> Seq.sortBy (fun v->(fst v).t) 
+-                            |> Seq.toList 
+-            let rec iterate insideA insideB mergedList =  
+-                match mergedList with 
+-                    | [] -> [] 
+-                    | head::tail ->  
+-                        let (intersection,hitA) = head 
+-                        let intersectionType = getIntersectionType hitA insideA insideB
+-                        let action = rules intersectionType
+-                        let flipNormal i = { i with n=(-1.0*i.n)}
+-                        let nextInA = (if (hitA) then not insideA else insideA)
+-                        let nextInB = (if (not hitA) then not insideB else insideB)
+-                        match action with
+-                            | Take    -> head::(iterate nextInA nextInB tail)
+-                            | Discard -> (iterate nextInA nextInB tail)
+-                            | Flip    -> (flipNormal intersection, hitA)::(iterate nextInA nextInB tail)
+-            iterate false false merged |> Seq.map fst 
++let constructedSolid (rules:CsgRules) (a:IntersectableFunc) (b: IntersectableFunc) r  =
++    let tuplePush a b = b,a
++    let aIntersections = a r |> Seq.map (tuplePush true) 
++    let bIntersections = b r |> Seq.map (tuplePush false)  
++    let merged = (Seq.concat [aIntersections;bIntersections])   
++                    |> Seq.sortBy (fun v->(fst v).t) 
++                    |> Seq.toList 
++    let rec iterate insideA insideB mergedList =  
++        match mergedList with 
++            | [] -> [] 
++            | head::tail ->  
++                let (intersection,hitA) = head 
++                let intersectionType = getIntersectionType hitA insideA insideB
++                let action = rules intersectionType
++                let flipNormal i = { i with n=(-1.0*i.n)}
++                let nextInA = (if (hitA) then not insideA else insideA)
++                let nextInB = (if (not hitA) then not insideB else insideB)
++                match action with
++                    | Take    -> head::(iterate nextInA nextInB tail)
++                    | Discard -> (iterate nextInA nextInB tail)
++                    | Flip    -> (flipNormal intersection, hitA)::(iterate nextInA nextInB tail)
++    iterate false false merged |> Seq.map fst 
+ 
+-let union a b = ConstructedSolid(unionRules,a,b) |> toIntersectableFunc
+-let subtract a b = ConstructedSolid(subtractRules,a,b) |> toIntersectableFunc
+-
+-let intersect a b = ConstructedSolid(intersectRules,a,b) |> toIntersectableFunc
+-
+-let exclude a b = ConstructedSolid(excludeRules,a,b) |> toIntersectableFunc
++let union = constructedSolid unionRules  
++let subtract = constructedSolid subtractRules  
++let intersect = constructedSolid intersectRules
++let exclude = constructedSolid excludeRules
+ 
+diff --git a/Plane.fs b/Plane.fs
+index e28f165..d5154d7 100644
+--- a/Plane.fs
++++ b/Plane.fs
+@@ -3,21 +3,15 @@ module Plane
+ open Ray
+ open Vector
+ 
++let plane p0 n r =
+ // Plane equation: (p - p0).n = 0
+-type private Plane(p0 : Point, n : Vector) =
+-    member this.P0 = p0
+-    member this.N = normalise n
+-    interface Intersectable with
+-        member this.Intersect r =
+-            let eps = 0.0000001
+-            let num = (this.P0 - r.o) .* this.N
+-            let denom = r.d .* this.N
+-            if abs denom < eps then
+-                if num < eps
+-                    then seq [ { t = 0.0; p = r.o; n = this.N } ]
+-                    else Seq.empty
+-            else
+-                let t = num / denom
+-                seq [ { t = t; p = r.o + t * r.d; n = this.N } ]
+-
+-let plane p0 n = Plane(p0, n) |> toIntersectableFunc
++    let eps = 0.0000001
++    let num = (p0 - r.o) .* n 
++    let denom = r.d .* n 
++    if abs denom < eps then
++        if num < eps
++            then seq [ { t = 0.0; p = r.o; n = n } ]
++            else Seq.empty
++    else
++        let t = num / denom
++        seq [ { t = t; p = r.o + t * r.d; n = n } ]
+\ No newline at end of file
+diff --git a/Ray.fs b/Ray.fs
+index 3fa2292..0a85fab 100644
+--- a/Ray.fs
++++ b/Ray.fs
+@@ -6,21 +6,11 @@ type RayIntersection = { t: float; p: Point; n: Vector }
+ 
+ type IntersectableFunc = (Ray->RayIntersection seq)
+ 
+-type Intersectable =
+-    abstract member Intersect: Ray -> RayIntersection seq
++type Intersectable = 
++    abstract member Intersect: Ray -> RayIntersection seq 
+ 
++let toIntersectableFunc (i:Intersectable) = i.Intersect 
+ 
+-let toIntersectableFunc (i:Intersectable) = i.Intersect
+-let intersect (i:IntersectableFunc) r = i r
++let combine (intersectables:IntersectableFunc seq) = (fun r->intersectables |> Seq.collect (fun v->v r))
+ 
+-type private CombinedIntersectable(intersectables) = 
+-    interface Intersectable with
+-        member this.Intersect r = intersectables |> Seq.collect (fun i -> intersect i r)
+-
+-type private ComposedIntersectable(i:Intersectable,f)=
+-    interface Intersectable with
+-        member this.Intersect r = i.Intersect r |>f
+-
+-
+-let combine x = CombinedIntersectable(x) |> toIntersectableFunc
+-let flipNormals i = i >> Seq.map (fun v->{v with n = (-1.0*v.n) }) 
+\ No newline at end of file
++let flipNormals i = i >> Seq.map (fun v->{v with n = (-1.0*v.n) }) 
+diff --git a/Sphere.fs b/Sphere.fs
+index ede4a02..c28c539 100644
+--- a/Sphere.fs
++++ b/Sphere.fs
+@@ -3,17 +3,13 @@ module Sphere
+ open Ray
+ open Vector
+ 
+-type private Sphere() =
+-    interface Intersectable with
+-        member this.Intersect r =
+-            let ov = Point.toVector r.o
+-            let a = r.d .* r.d
+-            let b = 2.0 * (ov .* r.d)
+-            let c = (ov .* ov) - 1.0
+-            let intersection t =
+-                let p = r.o + t * r.d
+-                { t = t; p = p; n = Point.toVector p |> normalise }
+-            Math.quadratic a b c |>
+-            Seq.map intersection
+-
+-let sphere = Sphere() |> toIntersectableFunc
++let sphere r =
++    let ov = Point.toVector r.o
++    let a = r.d .* r.d
++    let b = 2.0 * (ov .* r.d)
++    let c = (ov .* ov) - 1.0
++    let intersection t =
++        let p = r.o + t * r.d
++        { t = t; p = p; n = Point.toVector p |> normalise }
++    Math.quadratic a b c |>
++    Seq.map intersection
+diff --git a/Transform.fs b/Transform.fs
+index 25bc85e..92f0a96 100644
+--- a/Transform.fs
++++ b/Transform.fs
+@@ -77,18 +77,12 @@ let transpose (Matrix m) =
+ let inverseTranspose =
+     inverse >> matrix >> transpose
+ 
+-type private TransformedObject(underlyingObject, transform : Transform) =
+-    let underlyingObject = underlyingObject
++let transform transform object r = 
+     let modelToWorld = matrix transform
+     let worldToModel = matrix (inverse transform)
+     let normalToWorld = inverseTranspose transform
+-    interface Intersectable with
+-        member this.Intersect r =
+-            let r' = { o = worldToModel * r.o; d = worldToModel * r.d }
+-            underlyingObject r' |> Seq.map (fun ix -> { ix with p = modelToWorld * ix.p; n = normalToWorld * ix.n |> normalise })
+-
+-let transform t o = TransformedObject(o, t) |> toIntersectableFunc
+-            
++    let r' = { o = worldToModel * r.o; d = worldToModel * r.d }
++    object r' |> Seq.map (fun ix -> { ix with p = modelToWorld * ix.p; n = normalToWorld * ix.n |> normalise })
+ 
+             
+ 
+-- 
+2.10.2.windows.1
+
