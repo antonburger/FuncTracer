@@ -1,5 +1,5 @@
-camera pos (0,9,-20) lookat (-2,0,0) up (0,1,0) fov 60 ratio 1
-samples 1 
+camera pos (0,5,-20) lookat (-2,0,0) up (0,1,0) fov 60 ratio 1
+samples 1
 
 # House
 (subtract solidCylinder pos (0,0,0) radius 4 height 4 (scale (1.5,3,50) sphere pos (0,0,0) radius 1)) diffuse (1,0,0) reflectance 0 shineyness 0
@@ -17,8 +17,9 @@ sphere pos (-6, 9, -5) radius 0.5 diffuse (1,1,0) reflectance 1 shineyness 0
 
 plane point (0,0,0) normal (0,1,0) diffuse (1,1,1) reflectance 0 shineyness 0
 
-softdirectional dir (2,-1,1) samples 1 scatter 20 colour (1,1,1)
+#softdirectional dir (2,-1,1) samples 1 scatter 5 colour (0.2,0.2,0.2)
+positional pos (0.5,2,3) falloff (1,1,1) colour (1,1,1)
 #directional dir (2,-1,1) colour (1,1,1)
 
 # Offset the harshness of the shadows a bit.
-directional dir (0,-0.001,1) colour (0.4,0.4,0.4)
+#directional dir (0,-0.001,1) colour (0.4,0.4,0.4)

@@ -19,8 +19,8 @@ let shadeOrBackground background shader = function
     | Some fragment -> shader fragment 
     | _ -> background 
 
-let softShadowLightIntensity direction samples scattering (intersectsScene: Ray -> bool) origin =
-    let intersectsInDirection d = intersectsScene { o = origin; d = d}
+let softShadowLightIntensity direction samples scattering (intersectsScene: float -> Ray -> bool) origin =
+    let intersectsInDirection d = intersectsScene System.Double.MaxValue { o = origin; d = d}
     let occludedSampleCount = 
         Jitter.jitterVector samples scattering -direction
         |> Seq.map intersectsInDirection
@@ -28,16 +28,22 @@ let softShadowLightIntensity direction samples scattering (intersectsScene: Ray 
         |> Seq.length
     (float)(samples-occludedSampleCount)/(float)samples
 
-let shadowLightIntensity (intersectsScene: Ray -> bool) light point =
+let shadowLightIntensity (intersectsScene: float -> Ray -> bool) light point =
     match light with
     // Hard shadow determination - in or out.
-    | Directional v -> if (intersectsScene { o = point; d = -v }) then 0.0 else 1.0
+    | Directional v -> if (intersectsScene System.Double.MaxValue { o = point; d = -v }) then 0.0 else 1.0
     | SoftDirectional (direction, samples, scattering) -> softShadowLightIntensity direction samples scattering intersectsScene point
+    | Point (position, falloff) ->
+        let d = position - point
+        let distance = d.Length
+        if (intersectsScene distance { o = point; d = normalise d }) then 0.0 else
+            attenuate falloff distance
 
-let lightDirection light = 
+let lightDirection light atPoint = 
     match light with
         | Directional v -> v
         | SoftDirectional (v, _, _) -> v
+        | Point (p, _) -> atPoint - p |> normalise
 
 let diffuseShader fragment =
     let intersectedObject = fragment.intersectedObject
@@ -79,7 +85,7 @@ let getLightsOnPoint scene intersectedObject =
     Seq.map (fun light -> 
         let (Light (lightConfig, colour)) = light
         let intensity = shadowLightIntensity (intersectsAny scene) lightConfig shadowRayOrigin
-        (scaleColour intensity colour, (lightDirection lightConfig) );
+        (scaleColour intensity colour, (lightDirection lightConfig intersectedObject.intersection.p) );
     )
 
 let createFragments getColourForDirection scene ray intersection =
