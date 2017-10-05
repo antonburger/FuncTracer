@@ -22,7 +22,7 @@ let cone r =
         let p = Point (px, py + 1.0, pz)
         // But leave the normal as is - not affected by translation.
         let n = Vector (px, -py, pz) |> normalise
-        { t = t; p = p; n = if n .* r.d < 0.0 then n else -n }
+        { newIntersection with t = t; p = p; n = if n .* r.d < 0.0 then n else -n }
     Math.quadratic a b c |>
     Seq.map intersection |>
     Seq.filter (fun { p = Point(_, py, _) } -> py >= 0.0 && py <= 1.0)

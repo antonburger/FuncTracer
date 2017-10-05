@@ -10,8 +10,8 @@ let plane p0 n r =
     let denom = r.d .* n 
     if abs denom < eps then
         if num < eps
-            then seq [ { t = 0.0; p = r.o; n = n } ]
+            then seq [ { newIntersection with t = 0.0; p = r.o; n = n } ]
             else Seq.empty
     else
         let t = num / denom
-        seq [ { t = t; p = r.o + t * r.d; n = n } ]
+        seq [ {newIntersection with  t = t; p = r.o + t * r.d; n = n } ]

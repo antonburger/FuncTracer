@@ -7,7 +7,7 @@ open Scene;
 open FSharp.Collections.ParallelSeq
 
 type Fragment  = {
-    intersectedObject: IntersectedObject; 
+    intersection: RayIntersection; 
     light: Colour*Vector;
     viewRay: Ray
     getColour: Vector->Colour
@@ -46,17 +46,17 @@ let lightDirection light atPoint =
         | Point (p, _) -> atPoint - p |> normalise
 
 let diffuseShader fragment =
-    let intersectedObject = fragment.intersectedObject
-    let normal = intersectedObject.intersection.n 
+    let intersectedObject = fragment.intersection
+    let normal = intersectedObject.n 
     let (lightColour, lightDirection)= fragment.light
     let intensity= (-lightDirection) .* normal
-    scaleColour intensity (intersectedObject.sceneObject.Material.colour * lightColour)
+    scaleColour intensity (intersectedObject.material.colour * lightColour)
 
 let specularShader fragment = 
-    let intersectedObject = fragment.intersectedObject
-    let normal = intersectedObject.intersection.n |> normalise
+    let intersectedObject = fragment.intersection
+    let normal = intersectedObject.n |> normalise
     let (lightColour, lightDirection)= fragment.light
-    let shineyness = intersectedObject.sceneObject.Material.shineyness
+    let shineyness = intersectedObject.material.shineyness
     let reflectedLightDirection = Vector.reflect normal lightDirection |> Vector.normalise 
     let viewDirection = fragment.viewRay.d |> Vector.normalise
     let intensity = (viewDirection.*(-reflectedLightDirection)) ** shineyness
@@ -64,9 +64,9 @@ let specularShader fragment =
         lightColour |> Colour.map (fun v->v*intensity)
 
 let reflectionShader fragment = 
-    let intersectedObject = fragment.intersectedObject
-    let material = intersectedObject.sceneObject.Material
-    let normal = intersectedObject.intersection.n 
+    let intersectedObject = fragment.intersection
+    let material = intersectedObject.material
+    let normal = intersectedObject.n 
     let viewDirection = fragment.viewRay.d
     let reflectedDirection = Vector.reflect normal viewDirection
     if (material.reflectance>0.0) then
@@ -78,24 +78,24 @@ let multiPartShader (shaders:Shader list) fragment =
     shaders 
     |> Seq.sumBy (fun v->v fragment)
 
-let getLightsOnPoint scene intersectedObject =
+let getLightsOnPoint scene intersection =
     // Project shadow rays from fractionally above the intersected point in order to avoid speckling from self-intersections.
-    let shadowRayOrigin = intersectedObject.intersection.p + 0.0001 * intersectedObject.intersection.n
+    let shadowRayOrigin = intersection.p + 0.0001 * intersection.n
     scene.lights |> 
     Seq.map (fun light -> 
         let (Light (lightConfig, colour)) = light
         let intensity = shadowLightIntensity (intersectsAny scene) lightConfig shadowRayOrigin
-        (scaleColour intensity colour, (lightDirection lightConfig intersectedObject.intersection.p) );
+        (scaleColour intensity colour, (lightDirection lightConfig intersection.p) );
     )
 
-let createFragments getColourForDirection scene ray intersection =
+let createFragments getColourForDirection scene ray (intersection:RayIntersection) =
     getLightsOnPoint scene intersection
     |> Seq.map (fun light ->
             {
-            intersectedObject= intersection;
+            intersection= intersection;
             light=light;
             viewRay = ray;
-            getColour=getColourForDirection intersection.intersection.p
+            getColour=getColourForDirection intersection.p
             })
 
 let slightOffset (ray:Ray) = {o=ray.o + 0.0001 * ray.d; d=ray.d}

@@ -10,6 +10,6 @@ let sphere r =
     let c = (ov .* ov) - 1.0
     let intersection t =
         let p = r.o + t * r.d
-        { t = t; p = p; n = Point.toVector p |> normalise }
+        { newIntersection with  t = t; p = p; n = Point.toVector p |> normalise }
     Math.quadratic a b c |>
     Seq.map intersection

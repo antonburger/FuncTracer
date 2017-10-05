@@ -42,14 +42,14 @@ let printIntersectionAt pixel source =
     eprintfn "intersection:"
     eprintfn "%A" intersection
     eprintfn "material:"
-    eprintfn "%A" intersection.Value.sceneObject.Material
+    eprintfn "%A" intersection.Value.material
 
-    let reversedRay={d=(-ray.d); o=intersection.Value.intersection.p}
+    let reversedRay={d=(-ray.d); o=intersection.Value.p}
     eprintfn "Reversed Intersection:"
     let reversedIntersection = intersectScene scene (slightOffset reversedRay)
     eprintfn "%A" reversedIntersection
     eprintfn "material:"
-    eprintfn "%A" reversedIntersection.Value.sceneObject.Material
+    eprintfn "%A" reversedIntersection.Value.material
 
 
 

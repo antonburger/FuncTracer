@@ -14,7 +14,7 @@ open Point
     let intersection t =
         let (Point (px, py, pz)) = r.o + t * r.d
         let n = Vector (px, 0.0, pz) |> normalise
-        { t = t; p = Point (px, py, pz); n = if n .* r.d < 0.0 then n else -n }
+        { newIntersection with t = t; p = Point (px, py, pz); n = if n .* r.d < 0.0 then n else -n }
     Math.quadratic a b c |>
     Seq.map intersection |>
     Seq.filter (fun { p = Point(_, py, _) } -> py >= 0.0 && py <= 1.0)

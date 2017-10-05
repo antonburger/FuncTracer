@@ -16,25 +16,18 @@ with static member Default = {
     }
 
 
-type Material = { colour:Colour; reflectance: float; shineyness: float }
-type SceneObject(geometry: Geometry, material: Material) =
-    member this.Geometry = geometry
-    member this.Material = material
 
 type Scene = {
-    objects: SceneObject list;
+    objects: Geometry list;
     lights: Light list;
 }
 
 module Scene = 
     let addObject obj scene = {scene with objects=obj::scene.objects}
 
-type IntersectedObject = { intersection: RayIntersection; sceneObject: SceneObject }
-
-
 
 let sortByDistance = 
-    let rayDistance = fun { intersection={ t = t } } -> t
+    let rayDistance = (fun r->r.t)
     Seq.sortBy rayDistance >>
     Seq.skipWhile (rayDistance >> (>) 0.0)
 
@@ -42,10 +35,7 @@ let closest = sortByDistance >> Seq.tryHead
 
 let getAllIntersections ({ objects = objects }) r =
     let flip f = fun x y -> f y x
-    objects |> Seq.collect ( 
-                fun obj -> obj.Geometry r
-                        |> Seq.map(fun v->{intersection=v; sceneObject=obj})
-        ) 
+    objects |> Seq.collect ( fun obj -> obj r) 
 
 let intersectScene scene  = getAllIntersections scene >>  closest
 
@@ -53,5 +43,5 @@ let intersectScene scene  = getAllIntersections scene >>  closest
 let intersectsAny ({ objects = objects }) maxDistance r =
     let flip f = fun x y -> f y x
     objects |>
-    Seq.collect ( (fun v->v.Geometry r)) |>
+    Seq.collect ( (fun v->v r)) |>
     Seq.exists (fun i -> i.t >= 0.0 && i.t < maxDistance)

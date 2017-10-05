@@ -210,7 +210,7 @@ module Parsers =
     do geometryRef :=  primitive <|> inBrackets appliedFunction 
 
     let pobject = 
-        let factory geometry material = SceneObject(geometry,material)
+        let factory geometry material = setMaterial material geometry
         pipe2
            (geometry .>> ws)
            pmaterial
