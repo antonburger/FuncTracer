@@ -12,7 +12,7 @@ open Light
 open Image
 open Scene
 open Transform
-open Geometry
+open Csg
 open Ray
 
 module Parsers =
@@ -192,10 +192,10 @@ module Parsers =
 
 
     let (appliedFunction:Parser<Geometry,unit>) =
-        binaryGeometryFunction "union" Geometry.union         <|>
-        binaryGeometryFunction "subtract"  Geometry.subtract  <|>
-        binaryGeometryFunction "intersect" Geometry.intersect <|>
-        binaryGeometryFunction "exclude"   Geometry.exclude   <|>
+        binaryGeometryFunction "union"     Csg.union         <|>
+        binaryGeometryFunction "subtract"  Csg.subtract      <|>
+        binaryGeometryFunction "intersect" Csg.intersect     <|>
+        binaryGeometryFunction "exclude"   Csg.exclude       <|>
         groupFunction<|>
         (applied scaleFunction) <|> 
         (applied translateFunction) <|> 

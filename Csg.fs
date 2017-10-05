@@ -1,8 +1,8 @@
-module Geometry
+module Csg
 open Ray
 open Transform
 
-type private CsgIntersectionType = 
+type private IntersectionType = 
     | OutsideIntoA 
     | OutsideIntoB 
     | BIntoAB 
@@ -12,9 +12,9 @@ type private CsgIntersectionType =
     | AIntoOutside 
     | BIntoOutside
 
-type private CsgIntersectionRule = Take | Discard | Flip
+type private IntersectionRule = Take | Discard | Flip
 
-type private CsgRules = (CsgIntersectionType->CsgIntersectionRule)
+type private Rules = (IntersectionType->IntersectionRule)
 
 let private unionRules intersectionType =
     match intersectionType with
@@ -71,7 +71,7 @@ let private getIntersectionType hitSide inA inB =
         | (true,false)  -> AIntoAB
         | (false,false) -> OutsideIntoB
 
-let constructedSolid (rules:CsgRules) (a:Solid) (b: Solid) r  =
+let constructedSolid (rules:Rules) (a:Solid) (b: Solid) r  =
     let tuplePush a b = b,a
     let aIntersections = a r |> Seq.map (tuplePush HitA) 
     let bIntersections = b r |> Seq.map (tuplePush HitB)  
