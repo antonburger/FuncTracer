@@ -19,8 +19,8 @@ let shadeOrBackground background shader = function
     | Some fragment -> shader fragment 
     | _ -> background 
 
-let softShadowLightIntensity direction samples scattering scene point = 
-    let intersectsInDirection d = intersectsAny scene { o = point; d = d}
+let softShadowLightIntensity direction samples scattering (intersectsScene: Ray -> bool) origin =
+    let intersectsInDirection d = intersectsScene { o = origin; d = d}
     let occludedSampleCount = 
         Jitter.jitterVector samples scattering -direction
         |> Seq.map intersectsInDirection
@@ -28,23 +28,16 @@ let softShadowLightIntensity direction samples scattering scene point =
         |> Seq.length
     (float)(samples-occludedSampleCount)/(float)samples
 
-// Hard shadow determination - in or out. Probably want to change this to a shadow factor when there are area lights.
-let shadowLightIntensity scene light point =
+let shadowLightIntensity (intersectsScene: Ray -> bool) light point =
     match light with
-    | Directional v -> if (intersectsAny scene { o = point; d = -v }) then 0.0 else 1.0
-    | SoftDirectional (direction, samples, scattering) -> softShadowLightIntensity direction samples scattering scene point
+    // Hard shadow determination - in or out.
+    | Directional v -> if (intersectsScene { o = point; d = -v }) then 0.0 else 1.0
+    | SoftDirectional (direction, samples, scattering) -> softShadowLightIntensity direction samples scattering intersectsScene point
 
 let lightDirection light = 
     match light with
         | Directional v -> v
         | SoftDirectional (v, _, _) -> v
-
-let singleLightShader lightIntensity light intersectedObject = 
-    match light with 
-    | ( v, lightColour) -> 
-        let normal = intersectedObject.intersection.n 
-        let colour = intersectedObject.sceneObject.Material.colour * lightColour 
-        scaleColour (lightIntensity*(-(lightDirection v) .* normal)) colour 
 
 let diffuseShader fragment =
     let intersectedObject = fragment.intersectedObject
@@ -85,22 +78,19 @@ let getLightsOnPoint scene intersectedObject =
     scene.lights |> 
     Seq.map (fun light -> 
         let (Light (lightConfig, colour)) = light
-        let intensity = shadowLightIntensity scene lightConfig shadowRayOrigin
+        let intensity = shadowLightIntensity (intersectsAny scene) lightConfig shadowRayOrigin
         (scaleColour intensity colour, (lightDirection lightConfig) );
     )
 
-let createFragments getColourForDirection scene ray someIntersection = 
-    match someIntersection with 
-    | None -> Seq.empty
-    | Some intersection -> 
-        getLightsOnPoint scene intersection 
-        |> Seq.map (fun light -> 
-                {
-                intersectedObject= intersection; 
-                light=light; 
-                viewRay = ray;
-                getColour=getColourForDirection intersection.intersection.p
-                })
+let createFragments getColourForDirection scene ray intersection =
+    getLightsOnPoint scene intersection
+    |> Seq.map (fun light ->
+            {
+            intersectedObject= intersection;
+            light=light;
+            viewRay = ray;
+            getColour=getColourForDirection intersection.intersection.p
+            })
 
 let slightOffset (ray:Ray) = {o=ray.o + 0.0001 * ray.d; d=ray.d}
 
@@ -109,12 +99,12 @@ let rec getColourForRay shader scene recursionLimit ray =
         if (recursionLimit<=0) then Colour.black else
         getColourForRay shader scene (recursionLimit-1) {o=point; d=direction}
     slightOffset ray |>
-    intersectScene scene |> 
-    createFragments getColourForDirection scene ray |>
-    Seq.sumBy shader 
+    intersectScene scene |>
+    Option.map (createFragments getColourForDirection scene ray) |>
+    Option.defaultValue Seq.empty |>
+    Seq.sumBy shader
 
 let shade (shader:Shader) scene (pixelRays : seq<PixelCoord * Ray list>) =
-    let push a b = (a,b)
     let shadePixel = Seq.averageBy (getColourForRay shader scene 8)
     pixelRays
     |> PSeq.ordered
