@@ -54,14 +54,17 @@ let private excludeRules intersectionType =
         | AIntoOutside -> Take
         | BIntoOutside -> Take
 
-let private getIntersectionType hitA inA inB = 
-    if hitA then
+type private HitSide = HitA | HitB
+
+let private getIntersectionType hitSide inA inB = 
+    match hitSide with
+    | HitA ->
         match (inA, inB) with
             | (true,true)   -> ABleaveA
             | (false,true)  -> BIntoAB
             | (true,false)  -> AIntoOutside
             | (false,false) -> OutsideIntoA
-    else
+    | HitB ->
         match (inA, inB) with
         | (true,true)   -> ABleaveB
         | (false,true)  -> BIntoOutside
@@ -70,29 +73,27 @@ let private getIntersectionType hitA inA inB =
 
 let constructedSolid (rules:CsgRules) (a:IntersectableFunc) (b: IntersectableFunc) r  =
     let tuplePush a b = b,a
-    let aIntersections = a r |> Seq.map (tuplePush true) 
-    let bIntersections = b r |> Seq.map (tuplePush false)  
+    let aIntersections = a r |> Seq.map (tuplePush HitA) 
+    let bIntersections = b r |> Seq.map (tuplePush HitB)  
     let merged = (Seq.concat [aIntersections;bIntersections])   
                     |> Seq.sortBy (fun v->(fst v).t) 
                     |> Seq.toList 
     let rec iterate insideA insideB mergedList =  
         match mergedList with 
             | [] -> [] 
-            | head::tail ->  
-                let (intersection,hitA) = head 
-                let intersectionType = getIntersectionType hitA insideA insideB
+            | ((intersection, hitSide) as head)::tail ->  
+                let intersectionType = getIntersectionType hitSide insideA insideB
                 let action = rules intersectionType
                 let flipNormal i = { i with n=(-1.0*i.n)}
-                let nextInA = (if (hitA) then not insideA else insideA)
-                let nextInB = (if (not hitA) then not insideB else insideB)
+                let nextInA = if hitSide = HitA then not insideA else insideA
+                let nextInB = if hitSide = HitB then not insideB else insideB
                 match action with
                     | Take    -> head::(iterate nextInA nextInB tail)
                     | Discard -> (iterate nextInA nextInB tail)
-                    | Flip    -> (flipNormal intersection, hitA)::(iterate nextInA nextInB tail)
+                    | Flip    -> (flipNormal intersection, hitSide)::(iterate nextInA nextInB tail)
     iterate false false merged |> Seq.map fst 
 
 let union = constructedSolid unionRules  
 let subtract = constructedSolid subtractRules  
 let intersect = constructedSolid intersectRules
 let exclude = constructedSolid excludeRules
-
