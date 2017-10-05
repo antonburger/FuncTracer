@@ -27,7 +27,7 @@ module Parsers =
     let private skipTrivia = skipNewline <|> skipComment
     let private skipTrailingTrivia1 = skipMany1 skipTrivia
 
-    let inBrackets (x:Parser<'a,'b>) = between (skipChar '(' >>. ws) (skipChar ')') x
+    let inBrackets (x:Parser<'a,'b>) = between (skipChar '(' >>. anyWhitespace) (anyWhitespace >>. skipChar ')') x
 
     let private numberOptions =
         NumberLiteralOptions.AllowFraction |||
@@ -132,37 +132,36 @@ module Parsers =
                     namedPrimitive "cube" cube 
 
     let scaleFunction = 
-        let factory (x,y,z) object = transform (scale (x,y,z)) object 
+        let factory (x,y,z) = transform (scale (x,y,z)) 
         let arguments = 
-            pipe2
-                (ptriple .>> ws1)
-                geometry
-                factory
+                (ptriple .>> ws1) |>> factory
         pkeyword "scale" arguments
 
     let rotateFunction = 
-        let factory (x,y,z) angle object =
+        let factory (x,y,z) angle =
             let rotation = rotate (Vector (x,y,z)) (Deg.toRad (angle*1.0<deg>))
-            transform rotation object 
+            transform rotation 
         let arguments = 
-            pipe3
+            pipe2
                 (ptriple .>> ws1)
                 (pfloat .>> ws1)
-                geometry
                 factory
         pkeyword "rotate" arguments
 
-    let translateFunction = 
-        let factory (x,y,z) object =Transform.transform (translate (Vector (x,y,z))) object
+
+    let applied (f:Parser<Geometry->Geometry,unit>) =
+        pipe2 
+            (f .>> anyWhitespace) 
+            geometry 
+            (fun a (b:Geometry) -> a b)
+
+    let (translateFunction:Parser<Geometry->Geometry, unit>) = 
+        let factory (x,y,z) = Transform.transform (translate (Vector (x,y,z)))
         let arguments = 
-            pipe2
-                (ptriple .>> anyWhitespace)
-                geometry
-                factory
+                ptriple |>> factory
         pkeyword "translate" arguments
 
     let binaryGeometryFunction keyword f = 
-
         let factory object1 object2=
             f object1 object2 
         let objects =
@@ -180,16 +179,30 @@ module Parsers =
         let objects = argument |>> factory
         pkeyword "group" objects 
 
+    let geometryFunction = scaleFunction <|> translateFunction <|> rotateFunction
 
-    let geometryFunction =
+    let repeatFunction = 
+        let factory count f = repeat count f
+        let arguments = 
+            pipe2
+                (pint32 .>> anyWhitespace)
+                (geometryFunction .>> anyWhitespace)
+                factory
+        pkeyword "repeat" arguments
+
+
+    let (appliedFunction:Parser<Geometry,unit>) =
         binaryGeometryFunction "union" Geometry.union         <|>
         binaryGeometryFunction "subtract"  Geometry.subtract  <|>
         binaryGeometryFunction "intersect" Geometry.intersect <|>
         binaryGeometryFunction "exclude"   Geometry.exclude   <|>
-        groupFunction <|>
-        scaleFunction <|> translateFunction <|> rotateFunction
+        groupFunction<|>
+        (applied scaleFunction) <|> 
+        (applied translateFunction) <|> 
+        (applied rotateFunction) <|>
+        (applied repeatFunction)
 
-    do geometryRef :=  primitive <|> inBrackets geometryFunction 
+    do geometryRef :=  primitive <|> inBrackets appliedFunction 
 
     let pobject = 
         let factory geometry material = SceneObject(geometry,material)
