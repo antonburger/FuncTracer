@@ -63,6 +63,7 @@ module Parsers =
             (pkeyword "shineyness" pfloat)
             factory
 
+    let geometry, geometryRef = createParserForwardedToRef<Geometry, unit>()
     let psphere =
         let factory centre radius =
             // TODO: Allow arbitrary transforms. This was just the easiest way to prove the transforms without changing the file format :P
@@ -135,7 +136,7 @@ module Parsers =
         let arguments = 
             pipe2
                 (ptriple .>> ws1)
-                primitive
+                geometry
                 factory
         pkeyword "scale" arguments
 
@@ -147,7 +148,7 @@ module Parsers =
             pipe3
                 (ptriple .>> ws1)
                 (pfloat .>> ws1)
-                (primitive <|> inBrackets scaleFunction)
+                geometry
                 factory
         pkeyword "rotate" arguments
 
@@ -155,26 +156,25 @@ module Parsers =
         let factory (x,y,z) object =Transform.transform (translate (Vector (x,y,z))) object
         let arguments = 
             pipe2
-                (ptriple .>> ws1)
-                (primitive <|> inBrackets (rotateFunction <|> scaleFunction))
+                (ptriple .>> anyWhitespace)
+                geometry
                 factory
         pkeyword "translate" arguments
-    let transformFunction = scaleFunction <|> translateFunction <|> rotateFunction
 
     let binaryGeometryFunction keyword f = 
-        let argument = inBrackets transformFunction <|> primitive
 
         let factory object1 object2=
             f object1 object2 
         let objects =
             pipe2
-                (argument .>> ws1)
-                argument
+                (geometry .>> ws1)
+                geometry
                 factory
         pkeyword keyword objects 
 
+
     let groupFunction  = 
-        let argument = many ((inBrackets transformFunction <|> primitive) .>> anyWhitespace)
+        let argument = many (geometry .>> anyWhitespace)
         let factory arguments =
             group (List.toSeq arguments)
         let objects = argument |>> factory
@@ -187,13 +187,14 @@ module Parsers =
         binaryGeometryFunction "intersect" Geometry.intersect <|>
         binaryGeometryFunction "exclude"   Geometry.exclude   <|>
         groupFunction <|>
-        transformFunction 
-    let pGeometry =  inBrackets geometryFunction <|> primitive
+        scaleFunction <|> translateFunction <|> rotateFunction
+
+    do geometryRef :=  primitive <|> inBrackets geometryFunction 
 
     let pobject = 
         let factory geometry material = SceneObject(geometry,material)
         pipe2
-           (pGeometry .>> ws)
+           (geometry .>> ws)
            pmaterial
            factory
 
