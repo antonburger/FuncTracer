@@ -22,7 +22,7 @@ let shadeOrBackground background shader = function
 let softShadowLightIntensity direction samples scattering scene point = 
     let intersectsInDirection d = intersectsAny scene { o = point; d = d}
     let occludedSampleCount = 
-        jitter samples scattering -direction
+        Jitter.jitterVector samples scattering -direction
         |> Seq.map intersectsInDirection
         |> Seq.where id 
         |> Seq.length
