@@ -144,7 +144,7 @@ module Parsers =
         let arguments = 
             pipe2
                 (ptriple .>> ws1)
-                (pfloat .>> ws1)
+                pfloat
                 factory
         pkeyword "rotate" arguments
 
@@ -179,7 +179,13 @@ module Parsers =
         let objects = argument |>> factory
         pkeyword "group" objects 
 
-    let geometryFunction = scaleFunction <|> translateFunction <|> rotateFunction
+    let geometryFunction, geometryFunctionRef = createParserForwardedToRef<Geometry->Geometry, unit>()
+
+    let composedFunction = 
+        pipe2 
+            ((inBrackets geometryFunction) .>> anyWhitespace .>> pchar '.' .>> anyWhitespace)
+            (inBrackets geometryFunction)
+            (>>)
 
     let repeatFunction = 
         let factory count f = repeat count f
@@ -191,17 +197,16 @@ module Parsers =
         pkeyword "repeat" arguments
 
 
+
     let (appliedFunction:Parser<Geometry,unit>) =
         binaryGeometryFunction "union"     Csg.union         <|>
         binaryGeometryFunction "subtract"  Csg.subtract      <|>
         binaryGeometryFunction "intersect" Csg.intersect     <|>
         binaryGeometryFunction "exclude"   Csg.exclude       <|>
         groupFunction<|>
-        (applied scaleFunction) <|> 
-        (applied translateFunction) <|> 
-        (applied rotateFunction) <|>
-        (applied repeatFunction)
+        (applied  geometryFunction)
 
+    do geometryFunctionRef := repeatFunction <|> scaleFunction <|> translateFunction <|> rotateFunction <|> composedFunction
     do geometryRef :=  primitive <|> inBrackets appliedFunction 
 
     let pobject = 

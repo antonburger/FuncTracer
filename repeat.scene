@@ -1,7 +1,7 @@
 camera pos (0,5,-20) lookat (-2,0,0) up (0,1,0) fov 60 ratio 1
 samples 1
 
-(repeat 3 translate (-8,0,10)
+(repeat 3 (rotate (0,1,0) 10) . (translate (-8,0,10))
     (group
         (subtract solidCylinder pos (0,0,0) radius 4 height 4 (scale (1.5,3,50) sphere pos (0,0,0) radius 1)) 
         cone pos (0,4,0) radius 5 height 3 
