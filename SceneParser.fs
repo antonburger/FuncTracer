@@ -19,6 +19,10 @@ module Parsers =
     open Cube
     let private ws = skipMany (skipAnyOf [| ' '; '\t' |] <??> "space or tab")
     let private ws1 = skipMany1 (skipAnyOf [| ' '; '\t' |] <??> "space or tab")
+
+    let private anyWhitespace: Parser<unit,unit> = 
+        skipMany ((skipAnyOf [| ' '; '\t' |]) <|> skipNewline) 
+
     let private skipComment = skipChar '#' >>. skipRestOfLine true <?> "comment"
     let private skipTrivia = skipNewline <|> skipComment
     let private skipTrailingTrivia1 = skipMany1 skipTrivia
@@ -41,7 +45,7 @@ module Parsers =
         numberLiteral nonNegativeNumberOptions "non-negative number" |>> fun nl -> float nl.String
 
     let pkeyword name pValue =
-        skipStringCI name >>. ws1 >>. pValue
+        skipStringCI name >>. anyWhitespace >>. pValue
 
     let ptriple =
         let firstNumber = pnumber .>> ws
@@ -169,12 +173,20 @@ module Parsers =
                 factory
         pkeyword keyword objects 
 
+    let groupFunction  = 
+        let argument = many ((inBrackets transformFunction <|> primitive) .>> anyWhitespace)
+        let factory arguments =
+            group (List.toSeq arguments)
+        let objects = argument |>> factory
+        pkeyword "group" objects 
+
 
     let geometryFunction =
         binaryGeometryFunction "union" Geometry.union         <|>
         binaryGeometryFunction "subtract"  Geometry.subtract  <|>
         binaryGeometryFunction "intersect" Geometry.intersect <|>
         binaryGeometryFunction "exclude"   Geometry.exclude   <|>
+        groupFunction <|>
         transformFunction 
     let pGeometry =  inBrackets geometryFunction <|> primitive
 

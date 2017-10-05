@@ -25,7 +25,5 @@ open Transform
 let solidCylinder = 
     let top = Transform.transform (translate (Vector(0.0,1.0,0.0))) circle
     let bottom = Transform.transform (rotate (Vector(0.0,0.0,1.0)) (Deg.toRad 180.0<deg>)) circle
-    (fun r->
-        [top; bottom; cylinder ]
-        |> Seq.collect (fun v->v r)
-    )
+    let sides = cylinder
+    group [top;bottom;sides]

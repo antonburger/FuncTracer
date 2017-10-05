@@ -68,7 +68,7 @@ let private getIntersectionType hitA inA inB =
         | (true,false)  -> AIntoAB
         | (false,false) -> OutsideIntoB
 
-let constructedSolid (rules:CsgRules) (a:IntersectableFunc) (b: IntersectableFunc) r  =
+let constructedSolid (rules:CsgRules) (a:Solid) (b: Solid) r  =
     let tuplePush a b = b,a
     let aIntersections = a r |> Seq.map (tuplePush true) 
     let bIntersections = b r |> Seq.map (tuplePush false)  

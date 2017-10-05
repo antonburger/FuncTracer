@@ -21,6 +21,6 @@ let cube =
     let right = flipNormals <| transform (translate unitX) left
     let front = transform (rotate unitX (Deg.toRad -90.0<deg>)) square
     let back = flipNormals <| transform (translate unitZ) front
-    let combined = combine [bottom; top; left; right;front;back] 
+    let combined = group [bottom; top; left; right;front;back] 
     (combined |> transform (translate (Vector(-0.5, -0.5, -0.5))))
 

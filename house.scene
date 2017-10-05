@@ -13,9 +13,7 @@ sphere pos (-6, 7, -7) radius 0.5 diffuse (1,1,0) reflectance 1 shineyness 0
 sphere pos (-6, 9, -5) radius 0.5 diffuse (1,1,0) reflectance 1 shineyness 0
 
 # Crates
-(translate (-5.5, 0.5, -4.0) cube) diffuse (0.65,0.17,0.17) reflectance 0 shineyness 0
-(translate (-4.8, 1.5, -4.0) (rotate (0,1,0) 10 cube)) diffuse (0.65,0.17,0.17) reflectance 0 shineyness 0
-(translate (-4.1, 0.5, -4.3) (rotate (0,1,0) 0 cube)) diffuse (0.65,0.17,0.17) reflectance 0 shineyness 0
+(group (translate (-5.5, 0.5, -4.0) cube) (translate (-4.8, 1.5, -4.0) (rotate (0,1,0) 10 cube)) (translate (-4.1, 0.5, -4.3) (rotate (0,1,0) 0 cube)) ) diffuse (0.65,0.17,0.17) reflectance 0 shineyness 0
 
 plane point (0,0,0) normal (0,1,0) diffuse (1,1,1) reflectance 0 shineyness 0
 
