@@ -6,13 +6,13 @@ open Plane
 open Point
 open Transform
 
-
-let square = plane (Point (0.0,0.0,0.0)) (Vector (0.0,1.0,0.0)) >>
-        Seq.filter (
-            fun v -> 
-                let (Point(x,y,z)) = v.p
-                (x>=0.0) && (x<=1.0) && (z>=0.0) && (z<=1.0)
-        )
+let square =
+    plane (Point (0.0,0.0,0.0)) (Vector (0.0,1.0,0.0)) >>
+    Seq.filter (
+        fun v ->
+            let (Point(x,y,z)) = v.p
+            (x>=0.0) && (x<=1.0) && (z>=0.0) && (z<=1.0)
+    )
 
 let cube = 
     let bottom = flipNormals square

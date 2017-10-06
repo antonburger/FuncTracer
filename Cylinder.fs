@@ -4,8 +4,8 @@ open Ray
 open Vector
 open Plane
 open Point
- 
- let cylinder r = 
+
+let cylinder r = 
     let (Point (ox, oy, oz)) = r.o
     let (Vector (dx, dy, dz)) = r.d
     let a = dx * dx + dz * dz

@@ -94,8 +94,9 @@ let generateRays camera samplesPerPixel resolution =
     let pixels = seq { for y in 0..(resV resolution - 1) do for x in 0..(resH resolution - 1) -> PixelCoord (x, y) }
     let jitterPatterns = let pattern = jitterPattern samplesPerPixel in Seq.initInfinite (fun _ -> pattern)
     let pixelRays (pixel, jitterPattern) =
-        pixel, (
-        (List.map (fun jitter -> rayThroughPixel imagePlane pixel jitter) jitterPattern) 
-        |> List.map ( camera.focus |> Option.map depthOfFieldJitter |> Option.defaultValue id )
-        )
+        // Given a jitter offset, generate a ray with the given offset through the specified pixel on the image plane.
+        let jitteredRay = rayThroughPixel imagePlane pixel
+        // Given a ray, defocus it using the camera's aperture. For a pinhole camera, return the ray unchanged.
+        let defocusedRay = camera.focus |> Option.map depthOfFieldJitter |> Option.defaultValue id
+        (pixel, List.map (jitteredRay >> defocusedRay) jitterPattern)
     Seq.map pixelRays <| Seq.zip pixels jitterPatterns

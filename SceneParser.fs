@@ -32,7 +32,7 @@ module Parsers =
     let private skipTrivia = skipNewline <|> skipComment
     let private skipTrailingTrivia1 = skipMany1 skipTrivia
 
-    let inBrackets (x:Parser<'a,'b>) = between (skipChar '(' >>. anyWhitespace) (anyWhitespace >>. skipChar ')') x
+    let inBrackets (x:Parser<_, _>) = between (skipChar '(' >>. anyWhitespace) (anyWhitespace >>. skipChar ')') x
 
     let private numberOptions =
         NumberLiteralOptions.AllowFraction |||
