@@ -5,6 +5,11 @@ type Material = { colour:Colour; reflectance: float; shineyness: float }
 let mattWhite = { colour=white; reflectance=0.0; shineyness= 0.0}
 type Ray = { o: Point; d: Vector }
 
+let shiftOrigin distance ray = {ray with o=ray.o+distance*ray.d}
+
+let jitterDirection angle ray = 
+    { ray with d = Jitter.jitterVector 1 angle ray.d |> Seq.head }
+
 type RayIntersection = { 
     t: float; 
     p: Point; 

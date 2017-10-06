@@ -10,7 +10,7 @@ type SceneOptions = {
     resolution : Resolution;
 }
 with static member Default = {
-        camera = { o = Point (0.0, 0.0, 0.0); lookAt = Point(0.0, 0.0, 1.0); up = Vector (0.0, 1.0, 0.0); fovY = Deg.toRad 50.0<deg>; aspectRatio = 1.0};
+        camera = { o = Point (0.0, 0.0, 0.0); lookAt = Point(0.0, 0.0, 1.0); up = Vector (0.0, 1.0, 0.0); fovY = Deg.toRad 50.0<deg>; aspectRatio = 1.0; focus=None};
         multisampleCount = 8;
         resolution = Resolution (400, 400);
     }

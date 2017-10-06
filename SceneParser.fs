@@ -17,6 +17,11 @@ open Ray
 
 module Parsers =
     open Cube
+
+    let pipe6 p1 p2 p3 p4 p5 p6 f = 
+        pipe5 p1 p2 p3 p4 (tuple2 p5 p6)
+              (fun x1 x2 x3 x4 (x5, x6) -> f x1 x2 x3 x4 x5 x6)
+
     let private ws = skipMany (skipAnyOf [| ' '; '\t' |] <??> "space or tab")
     let private ws1 = skipMany1 (skipAnyOf [| ' '; '\t' |] <??> "space or tab")
 
@@ -53,6 +58,13 @@ module Parsers =
         let numberList = tuple3 firstNumber nextNumber nextNumber
         inBrackets numberList
         <??> "comma-separated list of 3 numbers in parens"
+
+    let ppair =
+        let firstNumber = pnumber .>> ws
+        let nextNumber = pchar ',' >>. ws >>. pnumber .>> ws
+        let numberList = tuple2 firstNumber nextNumber 
+        inBrackets numberList
+        <??> "comma-separated list of 2 numbers in parens"
 
     let pmaterial = 
         let factory (r,g,b) reflectance shineyness = 
@@ -228,16 +240,26 @@ module Parsers =
         sepEndBy pobject skipTrailingTrivia1
 
     let pcamera =
-        let factory pos lookAt up fov ratio =
-            let newCamera = { o = Point pos; lookAt = Point lookAt; up = Vector up |> normalise; fovY = Deg.toRad (1.0<deg> * fov); aspectRatio = ratio }
+        let factory pos lookAt up fov ratio (maybeFocus:(float*float) option) =
+            let focus = 
+                maybeFocus 
+                |> Option.map (fun (length, size)->{ focalLength=length; apetureAngularSize=Deg.toRad (size*1.0<deg>)}) 
+            let newCamera = { 
+                    o = Point pos; 
+                    lookAt = Point lookAt; 
+                    up = Vector up |> normalise; 
+                    fovY = Deg.toRad (1.0<deg> * fov); aspectRatio = ratio 
+                    focus = focus
+                }
             fun options -> { options with camera = newCamera }
         let camera =
-            pipe5
+            pipe6
                 (pkeyword "pos" (ptriple .>> ws1))
                 (pkeyword "lookat" (ptriple .>> ws1))
                 (pkeyword "up" (ptriple .>> ws1))
                 (pkeyword "fov" (pnonNegativeNumber .>> ws1))
-                (pkeyword "ratio" pnonNegativeNumber)
+                (pkeyword "ratio" pnonNegativeNumber.>>ws)
+                (opt (pkeyword "focus" ppair))
                 factory
         pkeyword "camera" camera
 

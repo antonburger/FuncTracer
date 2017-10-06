@@ -8,6 +8,7 @@
     <Compile Include="CommonTypes.fs" />
     <Compile Include="Math.fs" />
     <Compile Include="Light.fs" />
+    <Compile Include="Jitter.fs" />
     <Compile Include="Ray.fs" />
     <Compile Include="Transform.fs" />
     <Compile Include="Csg.fs" />
@@ -16,7 +17,6 @@
     <Compile Include="Cone.fs" />
     <Compile Include="Cylinder.fs" />
     <Compile Include="Cube.fs" />
-    <Compile Include="Jitter.fs" />
     <Compile Include="Image.fs" />
     <Compile Include="Scene.fs" />
     <Compile Include="SceneParser.fs" />

@@ -6,7 +6,15 @@ open Vector
 open Jitter
 open SixLabors.ImageSharp
 
-type Camera = { o: Point; lookAt: Point; up: Vector; fovY: float<rad>; aspectRatio: float }
+type Focus = { focalLength:float; apetureAngularSize:float<rad>}
+type Camera = { 
+                o: Point; 
+                lookAt: Point; 
+                up: Vector; 
+                fovY: float<rad>; 
+                aspectRatio: float;
+                focus:Focus option
+              }
 type PixelCoord = PixelCoord of x: int * y: int
 
 let scaleColour intensity =  
@@ -73,6 +81,12 @@ let rayThroughPixel imagePlane (PixelCoord (px, py)) (JitterOffset (jitterX, jit
     let via = imagePlane.originToCentre + jx * imagePlane.i + jy * imagePlane.j
     { o = imagePlane.origin; d = via }
 
+
+let depthOfFieldJitter focus = 
+    shiftOrigin focus.focalLength 
+    >> Ray.jitterDirection focus.apetureAngularSize
+    >> shiftOrigin -focus.focalLength
+
 let generateRays camera samplesPerPixel resolution =
     let imagePlane = createPlane camera resolution
     let random = System.Random()
@@ -80,5 +94,8 @@ let generateRays camera samplesPerPixel resolution =
     let pixels = seq { for y in 0..(resV resolution - 1) do for x in 0..(resH resolution - 1) -> PixelCoord (x, y) }
     let jitterPatterns = let pattern = jitterPattern samplesPerPixel in Seq.initInfinite (fun _ -> pattern)
     let pixelRays (pixel, jitterPattern) =
-        pixel, List.map (fun jitter -> rayThroughPixel imagePlane pixel jitter) jitterPattern
+        pixel, (
+        (List.map (fun jitter -> rayThroughPixel imagePlane pixel jitter) jitterPattern) 
+        |> List.map ( camera.focus |> Option.map depthOfFieldJitter |> Option.defaultValue id )
+        )
     Seq.map pixelRays <| Seq.zip pixels jitterPatterns
