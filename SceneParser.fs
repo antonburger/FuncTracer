@@ -127,7 +127,8 @@ module Parsers =
         pkeyword "cone" cone
 
     let pplane =
-        let factory point normal = plane (Point point) (Vector normal |> normalise) 
+        let factory point normal:Geometry = 
+            plane (Point point) (Vector normal |> normalise) 
 
         let plane =
             pipe2
@@ -148,6 +149,20 @@ module Parsers =
         let arguments = 
                 pfloat |>> factory
         pkeyword "hueShift" arguments
+
+    let pcolour = (ptriple) |>> (fun (r,g,b) -> Colour (r,g,b))
+
+    let gridTexture: Parser<Texture.Texture, unit> =
+        let arguments = 
+            pipe2
+                (pcolour .>> ws1)
+                (pcolour .>> ws1)
+                Texture.grid
+        pkeyword "grid" arguments
+
+    let textureFunction: Parser<Geometry->Geometry, unit> = 
+        let factory =  (textureDiffuse (Texture.grid Colour.black Colour.white))
+        pkeyword "texture" (gridTexture |>> textureDiffuse)
 
     let scaleFunction = 
         let factory (x,y,z) = transform (scale (x,y,z)) 
@@ -230,7 +245,7 @@ module Parsers =
         groupFunction<|>
         (applied  geometryFunction)
 
-    do geometryFunctionRef := hueShiftFunction <|> materialFunction <|> repeatFunction <|> scaleFunction <|> translateFunction <|> rotateFunction <|> composedFunction
+    do geometryFunctionRef := textureFunction <|> hueShiftFunction <|> materialFunction <|> repeatFunction <|> scaleFunction <|> translateFunction <|> rotateFunction <|> composedFunction
     do geometryRef :=  primitive <|> inBrackets appliedFunction 
 
     let pobject = 

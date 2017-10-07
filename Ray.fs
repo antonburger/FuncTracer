@@ -1,5 +1,6 @@
 module Ray
 open Colour
+open Texture
 
 type Material = { colour:Colour; reflectance: float; shineyness: float }
 let mattWhite = { colour=white; reflectance=0.0; shineyness= 0.0}
@@ -10,15 +11,16 @@ let shiftOrigin distance ray = {ray with o=ray.o+distance*ray.d}
 let jitterDirection angle ray = 
     { ray with d = Jitter.jitterVector 1 angle ray.d |> Seq.head }
 
+
 type RayIntersection = { 
     t: float; 
     p: Point; 
     n: Vector;
-    material: Material
+    material: Material;
+    uv: TextureCoords
     }
 
-let newIntersection = { t=0.0; p=Point.Zero; n=Vector.unitX; material=mattWhite }
-
+let newIntersection = { t=0.0; p=Point.Zero; n=Vector.unitX; material=mattWhite; uv=(0.0,0.0) }
 
 type Geometry = (Ray->RayIntersection seq)
 type Solid = (Ray->RayIntersection seq)
@@ -43,3 +45,7 @@ let hueShift angle object =
         {
             v with material = { v.material with colour = Colour.hueShift angle v.material.colour }
         })
+
+let textureDiffuse texture (object:Geometry):Geometry =
+    object >> Seq.map 
+        (fun ri -> {ri with material = {ri.material with colour = texture ri.uv}})
