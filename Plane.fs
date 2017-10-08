@@ -8,8 +8,10 @@ let private setUV r =
     let (Point (x,y,z)) = r.p
     {r with uv = (x-floor x, z-floor z) }
 
-let plane p0 n =
+let plane =
     let intersect r = 
+        let p0 = Point.Zero
+        let n = Vector.unitY
     // Plane equation: (p - p0).n = 0
         let eps = 0.0000001
         let num = (p0 - r.o) .* n 

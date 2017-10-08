@@ -7,7 +7,7 @@ open Point
 open Transform
 
 let square =
-    plane (Point (0.0,0.0,0.0)) (Vector (0.0,1.0,0.0)) >>
+    plane >>
     Seq.filter (
         fun v ->
             let (Point(x,y,z)) = v.p

@@ -66,115 +66,57 @@ module Parsers =
         inBrackets numberList
         <??> "comma-separated list of 2 numbers in parens"
 
+    let pcolour = (ptriple) |>> (fun (r,g,b) -> Colour (r,g,b))
+
     let pmaterial = 
-        let factory (r,g,b) reflectance shineyness = 
-            { colour=(Colour(r,g,b)); reflectance=reflectance; shineyness=shineyness}
+        let factory colour reflectance shineyness = 
+            { colour=colour; reflectance=reflectance; shineyness=shineyness}
         pipe3
-            (pkeyword "diffuse" (ptriple .>> ws1))
+            (pkeyword "diffuse" (pcolour .>> ws1))
             (pkeyword "reflectance" (pfloat .>> ws1))
             (pkeyword "shineyness" pfloat)
             factory
 
     let geometry, geometryRef = createParserForwardedToRef<Geometry, unit>()
-    let psphere =
-        let factory centre radius =
-            // TODO: Allow arbitrary transforms. This was just the easiest way to prove the transforms without changing the file format :P
-            let transform = compose [scale (radius, radius, radius); translate (Vector centre)]
-            Transform.transform transform sphere
-        let sphere =
-            pipe2
-                (pkeyword "pos" ptriple .>> ws1)
-                (pkeyword "radius" pnonNegativeNumber)
-                factory
-        pkeyword "sphere" sphere
-
-    let pcylinder =
-        let factory centre radius height =
-            // TODO: Allow arbitrary transforms. This was just the easiest way to prove the transforms without changing the file format :P
-            let transform = compose [scale (radius, height, radius); translate (Vector centre)]
-            Transform.transform transform cylinder
-        let cylinder =
-            pipe3
-                (pkeyword "pos" (ptriple .>> ws1))
-                (pkeyword "radius" (pnonNegativeNumber .>> ws1))
-                (pkeyword "height" pnonNegativeNumber)
-                factory
-        pkeyword "cylinder" cylinder
-
-    let psolidCylinder =
-        let factory centre radius height =
-            let transform = compose [scale (radius, height, radius); translate (Vector centre)]
-            Transform.transform transform solidCylinder 
-        let cylinder =
-            pipe3
-                (pkeyword "pos" (ptriple .>> ws1))
-                (pkeyword "radius" (pnonNegativeNumber .>> ws1))
-                (pkeyword "height" pnonNegativeNumber)
-                factory
-        pkeyword "solidCylinder" cylinder
-
-    let pcone =
-        let factory centre radius height =
-            // TODO: Allow arbitrary transforms. This was just the easiest way to prove the transforms without changing the file format :P
-            let transform = compose [scale (radius, height, radius); translate (Vector centre)]
-            Transform.transform transform cone
-        let cone =
-            pipe3
-                (pkeyword "pos" (ptriple .>> ws1))
-                (pkeyword "radius" (pnonNegativeNumber .>> ws1))
-                (pkeyword "height" pnonNegativeNumber)
-                factory
-        pkeyword "cone" cone
-
-    let pplane =
-        let factory point normal:Geometry = 
-            plane (Point point) (Vector normal |> normalise) 
-
-        let plane =
-            pipe2
-                (pkeyword "point" (ptriple .>> ws1))
-                (pkeyword "normal" ptriple)
-                factory
-        pkeyword "plane" plane
 
     let namedPrimitive name value = skipStringCI name |>> (fun()->value)
 
-    let primitive = psphere <|> pplane <|> pcylinder <|> pcone <|> psolidCylinder <|>
-                    namedPrimitive "circle" circle <|>
+    let primitive = namedPrimitive "circle" circle <|>
                     namedPrimitive "square" square <|>
-                    namedPrimitive "cube" cube 
+                    namedPrimitive "cube" cube <|>
+                    namedPrimitive "sphere" sphere <|>
+                    namedPrimitive "plane" plane <|>
+                    namedPrimitive "cone" cone <|>
+                    namedPrimitive "solidCylinder" solidCylinder <|>
+                    namedPrimitive "cylinder" cylinder 
+
 
     let hueShiftFunction:Parser<Geometry->Geometry, unit> = 
-        let factory angle = hueShift angle 
-        let arguments = 
-                pfloat |>> factory
-        pkeyword "hueShift" arguments
-
-    let pcolour = (ptriple) |>> (fun (r,g,b) -> Colour (r,g,b))
+        pkeyword "hueShift" (pfloat |>> hueShift)
 
     let gridTexture: Parser<Texture.Texture, unit> =
         let arguments = 
             pipe2
                 (pcolour .>> ws1)
-                (pcolour .>> ws1)
+                pcolour 
                 Texture.grid
         pkeyword "grid" arguments
 
     let textureFunction: Parser<Geometry->Geometry, unit> = 
-        let factory =  (textureDiffuse (Texture.grid Colour.black Colour.white))
         pkeyword "texture" (gridTexture |>> textureDiffuse)
+
+    let scalefloat = 
+        pnumber |>> (fun x->(x,x,x))
+
 
     let scaleFunction = 
         let factory (x,y,z) = transform (scale (x,y,z)) 
         let arguments = 
-                (ptriple .>> ws1) |>> factory
+                ((ptriple <|> scalefloat) .>> ws1) |>> factory
         pkeyword "scale" arguments
 
     let materialFunction:Parser<Geometry->Geometry, unit> = 
-        let factory m = setMaterial m
-        let arguments = 
-                (pmaterial .>> anyWhitespace) |>> factory
-        pkeyword "material" arguments
+        pkeyword "material" (pmaterial |>> setMaterial)
 
     let rotateFunction = 
         let factory (x,y,z) angle =
@@ -209,7 +151,6 @@ module Parsers =
                 geometry
                 factory
         pkeyword keyword objects 
-
 
     let groupFunction  = 
         let argument = many (geometry .>> anyWhitespace)

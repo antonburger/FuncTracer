@@ -2,30 +2,36 @@ camera pos (15,11,-20) lookat (-2,0,0) up (0,1,0) fov 60 ratio 1
 samples 1
 
 # House
-(material diffuse (1,0,0) reflectance 0 shineyness 0
-    (subtract solidCylinder pos (0,0,0) radius 4 height 4 (scale (1.5,3,50) sphere pos (0,0,0) radius 1)) 
+(group
+    (material diffuse (0.39,0.58,0.92) reflectance 0 shineyness 0 
+        (subtract (scale 4 solidCylinder) (scale (1.5,3,50) sphere))
+    )
+    (material diffuse (1,0,0) reflectance 0 shineyness 0 
+        (translate (0,4,0) (scale (5,3,5) cone))
+    )
 )
-#solidCylinder pos (0,0,0) radius 4 height 4 diffuse (1,0,0) reflectance 0 shineyness 0
-(material  diffuse (0.39,0.58,0.92) reflectance 0 shineyness 0
-    cone pos (0,4,0) radius 5 height 3
-)
+
 
 # Fence
 (material diffuse (0,1,1) reflectance 0.5 shineyness 0
     (repeat 8 translate (-0.4,0,-1)
-        solidCylinder pos (-2.0,0,-5.0) radius 0.1 height 1.5
+        (translate (-2,0,-5) (scale (0.1,1.5,0.1) solidCylinder))
     )
 )
 
 # Tree 1
-(material diffuse (0.65,0.17,0.17) reflectance 0 shineyness 0
-    cylinder pos (-8,0,-5) radius 0.5 height 4 
-)    
-(material diffuse (0,1,0) reflectance 0 shineyness 0
+(translate (-8,0,-5) 
     (group
-        sphere pos (-8,7,-5) radius 3
-        sphere pos (-6, 7, -7) radius 0.5
-        sphere pos (-6, 9, -5) radius 0.5
+        (material diffuse (0.65,0.17,0.17) reflectance 0 shineyness 0 
+            (scale (0.5,4,0.5) cylinder) 
+        )    
+        (material diffuse (0,1,0) reflectance 0 shineyness 0
+            (group
+                (translate (0,7,0) (scale 3 sphere))
+                (translate (2,7,-2) (scale 0.5 sphere))
+                (translate (2,9,0) (scale 0.5 sphere))
+            )
+        )
     )
 )
 
@@ -38,9 +44,7 @@ samples 1
     (translate (-4.1, 0.5, -4.3) (rotate (0,1,0) 0 cube)) 
 )))
 
-(material diffuse (1,1,1) reflectance 0 shineyness 0
-    plane point (0,0,0) normal (0,1,0) 
-)
+(material diffuse (1,1,1) reflectance 0 shineyness 0 plane )
 
 softdirectional dir (2,-1,1) samples 1 scatter 5 colour (0.1,0.1,0.1)
 positional pos (0.5,2,2) falloff (1,0.01,0.02) colour (0.7,0.7,0.2)

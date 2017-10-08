@@ -19,7 +19,7 @@ let cylinder r =
     Seq.map intersection |>
     Seq.filter (fun { p = Point(_, py, _) } -> py >= 0.0 && py <= 1.0)
 
-let circle = plane (Point (0.0,0.0,0.0)) (Vector(0.0,1.0,0.0)) >> Seq.filter (fun v -> (v.p-Point.Zero).Length<1.0)
+let circle = plane >> Seq.filter (fun v -> (v.p-Point.Zero).Length<1.0)
 
 open Transform
 let solidCylinder = 
