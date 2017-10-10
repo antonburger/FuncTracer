@@ -52,15 +52,11 @@ module Parsers =
     let pkeyword name pValue =
         skipStringCI name >>. anyWhitespace >>. pValue
 
-    let pnakedTriple = 
+    let ptriple =
         let firstNumber = pnumber .>> ws
         let nextNumber = pchar ',' >>. ws >>. pnumber .>> ws
         let numberList = tuple3 firstNumber nextNumber nextNumber
-        numberList
-        <??> "comma-separated list of 3 numbers"
-
-    let ptriple =
-        inBrackets pnakedTriple
+        inBrackets numberList
         <??> "comma-separated list of 3 numbers in parens"
 
     let ppair =
@@ -70,27 +66,13 @@ module Parsers =
         inBrackets numberList
         <??> "comma-separated list of 2 numbers in parens"
 
-    let pnakedcolour = (pnakedTriple) |>> (fun (r,g,b) -> Colour (r,g,b))
-    let pcolour = ptriple |>> (fun (r,g,b) -> Colour (r,g,b))
-
-    let constantTexture: Parser<Texture.Texture<Colour>,unit> = 
-        pnakedcolour |>> (fun v->(fun _->v))
-
-    let gridTexture: Parser<Texture.Texture<Colour>, unit> =
-        let arguments = 
-            pipe2
-                (pcolour .>> ws1)
-                pcolour 
-                Texture.grid
-        pkeyword "grid" arguments
-
-    let ptexture = inBrackets (pkeyword "texture" gridTexture <|> constantTexture)
+    let pcolour = (ptriple) |>> (fun (r,g,b) -> Colour (r,g,b))
 
     let pmaterial = 
         let factory colour reflectance shineyness = 
             { colour=colour; reflectance=reflectance; shineyness=shineyness}
         pipe3
-            (pkeyword "diffuse" (ptexture .>> ws1))
+            (pkeyword "diffuse" (pcolour .>> ws1))
             (pkeyword "reflectance" (pfloat .>> ws1))
             (pkeyword "shineyness" pfloat)
             factory
@@ -112,6 +94,16 @@ module Parsers =
     let hueShiftFunction:Parser<Geometry->Geometry, unit> = 
         pkeyword "hueShift" (pfloat |>> hueShift)
 
+    let gridTexture: Parser<Texture.Texture, unit> =
+        let arguments = 
+            pipe2
+                (pcolour .>> ws1)
+                pcolour 
+                Texture.grid
+        pkeyword "grid" arguments
+
+    let textureFunction: Parser<Geometry->Geometry, unit> = 
+        pkeyword "texture" (gridTexture |>> textureDiffuse)
 
     let scalefloat = 
         pnumber |>> (fun x->(x,x,x))
@@ -194,7 +186,7 @@ module Parsers =
         groupFunction<|>
         (applied  geometryFunction)
 
-    do geometryFunctionRef := hueShiftFunction <|> materialFunction <|> repeatFunction <|> scaleFunction <|> translateFunction <|> rotateFunction <|> composedFunction
+    do geometryFunctionRef := textureFunction <|> hueShiftFunction <|> materialFunction <|> repeatFunction <|> scaleFunction <|> translateFunction <|> rotateFunction <|> composedFunction
     do geometryRef :=  primitive <|> inBrackets appliedFunction 
 
     let pobject = 
