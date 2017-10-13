@@ -9,7 +9,8 @@
     <Compile Include="Math.fs" />
     <Compile Include="Light.fs" />
     <Compile Include="Jitter.fs" />
-    <Compile Include="Texture.fs" />
+    <Compile Include="Textures/Texture.fs" />
+    <Compile Include="Textures/Image.fs" />
     <Compile Include="Ray.fs" />
     <Compile Include="Transform.fs" />
     <Compile Include="Csg.fs" />

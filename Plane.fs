@@ -6,7 +6,7 @@ open Texture
 
 let private setUV r = 
     let (Point (x,y,z)) = r.p
-    {r with uv = (x-floor x, z-floor z) }
+    {r with uv = (x,z) }
 
 let plane =
     let intersect r = 

@@ -102,8 +102,16 @@ module Parsers =
                 Texture.grid
         pkeyword "grid" arguments
 
+    let pfile:Parser<string,unit> = 
+        let normalChar = satisfy (fun c -> c <> '"')
+        between (pstring "\"") (pstring "\"") (manyChars normalChar)
+
+    let imageTexture:Parser<Texture.Texture,unit> = 
+        let arguments = pfile |>> ImageTexture.image
+        pkeyword "image" arguments
+
     let textureFunction: Parser<Geometry->Geometry, unit> = 
-        pkeyword "texture" (gridTexture |>> textureDiffuse)
+        pkeyword "texture" ((gridTexture <|> imageTexture)|>> textureDiffuse)
 
     let scalefloat = 
         pnumber |>> (fun x->(x,x,x))
