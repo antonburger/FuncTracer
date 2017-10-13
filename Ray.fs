@@ -1,6 +1,5 @@
 module Ray
 open Colour
-open Texture
 
 type Material = { colour:Colour; reflectance: float; shineyness: float }
 let mattWhite = { colour=white; reflectance=0.0; shineyness= 0.0}
@@ -11,7 +10,7 @@ let shiftOrigin distance ray = {ray with o=ray.o+distance*ray.d}
 let jitterDirection angle ray = 
     { ray with d = Jitter.jitterVector 1 angle ray.d |> Seq.head }
 
-
+type TextureCoords = float*float
 type RayIntersection = { 
     t: float; 
     p: Point; 

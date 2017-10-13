@@ -46,6 +46,9 @@ module Parsers =
     let private pnumber =
         numberLiteral numberOptions "number" |>> fun nl -> float nl.String
 
+    let private pangle =
+        pnumber |>> (fun v->Deg.toRad (v*1.0<deg>))
+
     let private pnonNegativeNumber =
         numberLiteral nonNegativeNumberOptions "non-negative number" |>> fun nl -> float nl.String
 
@@ -67,6 +70,16 @@ module Parsers =
         <??> "comma-separated list of 2 numbers in parens"
 
     let pcolour = (ptriple) |>> (fun (r,g,b) -> Colour (r,g,b))
+
+    let pfile:Parser<string,unit> = 
+        let normalChar = satisfy (fun c -> c <> '"')
+        between (pstring "\"") (pstring "\"") (manyChars normalChar)
+
+    let applied<'a, 'b> (f:Parser<'a->'b,unit>) argument =
+        pipe2 
+            (f .>> anyWhitespace) 
+            argument
+            (fun a b -> a b)
 
     let pmaterial = 
         let factory colour reflectance shineyness = 
@@ -94,6 +107,8 @@ module Parsers =
     let hueShiftFunction:Parser<Geometry->Geometry, unit> = 
         pkeyword "hueShift" (pfloat |>> hueShift)
 
+    let texture, textureRef = createParserForwardedToRef<Texture.Texture, unit>()
+
     let gridTexture: Parser<Texture.Texture, unit> =
         let arguments = 
             pipe2
@@ -102,20 +117,25 @@ module Parsers =
                 Texture.grid
         pkeyword "grid" arguments
 
-    let pfile:Parser<string,unit> = 
-        let normalChar = satisfy (fun c -> c <> '"')
-        between (pstring "\"") (pstring "\"") (manyChars normalChar)
-
     let imageTexture:Parser<Texture.Texture,unit> = 
         let arguments = pfile |>> ImageTexture.image
         pkeyword "image" arguments
 
-    let textureFunction: Parser<Geometry->Geometry, unit> = 
-        pkeyword "texture" ((gridTexture <|> imageTexture)|>> textureDiffuse)
+    let scaleTexture:Parser<Texture.Texture->Texture.Texture,unit> = 
+        pkeyword "scale" (ppair |>> Texture.scale)
+
+    let rotateTexture:Parser<Texture.Texture->Texture.Texture,unit> = 
+        pkeyword "rotate" (pangle |>> Texture.rotate)
+
+    let textureFunction = scaleTexture <|> rotateTexture
+
+    do textureRef :=  gridTexture <|> imageTexture <|> inBrackets (applied textureFunction texture)
+
+    let textureGeometryFunction: Parser<Geometry->Geometry, unit> = 
+        pkeyword "texture" (texture |>> textureDiffuse)
 
     let scalefloat = 
         pnumber |>> (fun x->(x,x,x))
-
 
     let scaleFunction = 
         let factory (x,y,z) = transform (scale (x,y,z)) 
@@ -136,13 +156,6 @@ module Parsers =
                 pfloat
                 factory
         pkeyword "rotate" arguments
-
-
-    let applied (f:Parser<Geometry->Geometry,unit>) =
-        pipe2 
-            (f .>> anyWhitespace) 
-            geometry 
-            (fun a (b:Geometry) -> a b)
 
     let (translateFunction:Parser<Geometry->Geometry, unit>) = 
         let factory (x,y,z) = Transform.transform (translate (Vector (x,y,z)))
@@ -169,10 +182,10 @@ module Parsers =
 
     let geometryFunction, geometryFunctionRef = createParserForwardedToRef<Geometry->Geometry, unit>()
 
-    let composedFunction =  // BUG: Doesn't work without the brackets 
+    let composed f =  // BUG: Doesn't work without the brackets 
         pipe2 
-            ((inBrackets geometryFunction) .>> anyWhitespace .>> pchar '.' .>> anyWhitespace)
-            (inBrackets geometryFunction)
+            ((inBrackets f) .>> anyWhitespace .>> pchar '.' .>> anyWhitespace)
+            (inBrackets f)
             (>>)
 
     let repeatFunction = 
@@ -184,17 +197,15 @@ module Parsers =
                 factory
         pkeyword "repeat" arguments
 
-
-
     let (appliedFunction:Parser<Geometry,unit>) =
         binaryGeometryFunction "union"     Csg.union         <|>
         binaryGeometryFunction "subtract"  Csg.subtract      <|>
         binaryGeometryFunction "intersect" Csg.intersect     <|>
         binaryGeometryFunction "exclude"   Csg.exclude       <|>
         groupFunction<|>
-        (applied  geometryFunction)
+        (applied geometryFunction geometry)
 
-    do geometryFunctionRef := textureFunction <|> hueShiftFunction <|> materialFunction <|> repeatFunction <|> scaleFunction <|> translateFunction <|> rotateFunction <|> composedFunction
+    do geometryFunctionRef := textureGeometryFunction <|> hueShiftFunction <|> materialFunction <|> repeatFunction <|> scaleFunction <|> translateFunction <|> rotateFunction <|> (composed geometryFunction)
     do geometryRef :=  primitive <|> inBrackets appliedFunction 
 
     let pobject = 
