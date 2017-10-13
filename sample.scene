@@ -11,7 +11,7 @@ samples 1
     (translate (1,3,6)  sphere ) 
 )
 
-(material diffuse (1, 1, 1) reflectance 0 shineyness 0 
+(texture (scale (0.1,0.1) grid (1,1,1) (0,0,0))
     (translate (3,1,3)  sphere ) 
 )
 
