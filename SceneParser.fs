@@ -238,11 +238,17 @@ module Parsers =
                 factory
         pkeyword "camera" camera
 
+    // samples ["corner"|number]
+    // If "corner", then use corner sampling.
+    // If <number>, then use random jittering with the specified number of samples.
     let psamples =
-        let factory multisampleCount =
-            fun options -> { options with multisampleCount = multisampleCount }
-        let samples = pint32 |>> factory <??> "positive number"
-        pkeyword "samples" samples
+        let jitterFactory multisampleCount =
+            fun options -> { options with samplingStrategy = JitteredSampling.strategy multisampleCount }
+        let cornerFactory =
+            fun options -> { options with samplingStrategy = CornerSampling.strategy }
+        let jitterStrategy = pint32 |>> jitterFactory <??> "positive number"
+        let cornerStrategy = pstring "corner" >>. preturn cornerFactory
+        pkeyword "samples" (jitterStrategy <|> cornerStrategy)
 
     let presolution =
         let factory res =

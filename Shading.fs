@@ -110,11 +110,11 @@ let rec getColourForRay shader scene recursionLimit ray =
     Option.defaultValue Seq.empty |>
     Seq.sumBy shader
 
-let shade (shader:Shader) scene (pixelRays : seq<PixelCoord * Ray list>) =
-    let shadePixel = Seq.averageBy (getColourForRay shader scene 8)
+let shade (shader:Shader) scene (pixelRays : Ray seq) =
+    let shadeRay = getColourForRay shader scene 8
     let chunks = Seq.chunkBySize 1000 pixelRays
     chunks
     |> PSeq.ordered
-    |> PSeq.collect (Array.map (fun pixelRay -> (fst pixelRay, shadePixel <| snd pixelRay)))
-    :> seq<PixelCoord * Colour>
+    |> PSeq.collect (Array.map shadeRay)
+    :> Colour seq
 

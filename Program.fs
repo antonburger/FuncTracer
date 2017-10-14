@@ -36,8 +36,8 @@ let duration f =
 
 let printIntersectionAt pixel source =
     let (options, scene) = readScene source
-    let imagePlane = createPlane options.camera options.resolution
-    let ray=rayThroughPixel imagePlane pixel (Jitter.JitterOffset (0.0, 0.0))
+    let imagePlane = ImagePlane.create options.camera options.resolution
+    let ray=ImagePlane.rayThroughPixel imagePlane pixel (Jitter.JitterOffset (0.0, 0.0))
     let intersection = intersectScene scene ray
     eprintfn "intersection:"
     eprintfn "%A" intersection
@@ -56,13 +56,17 @@ let printIntersectionAt pixel source =
 let runTracer (timer:Diagnostics.Stopwatch, input:TextReader, output:Stream) = 
     let (options, scene) = readScene input
     eprintfn "Parsed input %ims" timer.ElapsedMilliseconds
-    let pixelRays = generateRays options.camera options.multisampleCount options.resolution
+    let samplingStrategy = options.samplingStrategy <| ImagePlane.create options.camera options.resolution
+    let pixelRays = samplingStrategy.generateRays ()
+    let defocusRays = options.camera.focus |> Option.map ImagePlane.depthOfFieldJitter |> Option.defaultValue id
+    let pixelRays = List.map defocusRays pixelRays
     eprintfn "Generated rays: %ims" timer.ElapsedMilliseconds
     let shader = multiPartShader [specularShader; reflectionShader; diffuseShader]
     eprintfn "Created shader: %ims" timer.ElapsedMilliseconds
-    let pixels = shade shader scene pixelRays
+    let colours = shade shader scene pixelRays
+    let pixelColours = samplingStrategy.blendPixels colours
     eprintfn "Shaded scene %ims" timer.ElapsedMilliseconds
-    let bitmap = { resolution = options.resolution; pixels = Seq.toList << Seq.map snd <| pixels }
+    let bitmap = { resolution = options.resolution; pixels = Seq.toList << Seq.map snd <| pixelColours }
     eprintfn "Writing output %ims" timer.ElapsedMilliseconds
     write bitmap output 
     0
