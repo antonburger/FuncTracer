@@ -4,9 +4,22 @@ open Texture
 open SixLabors.ImageSharp
 open CommonTypes
 open SixLabors.ImageSharp.PixelFormats
+open Hopac
+open HttpFs.Client
+open System.IO
 
-let image (file:string):Texture = 
-    use stream = System.IO.File.OpenRead file
+let loadHttp url = 
+  let response = Request.createUrl Get url |> getResponse |> run
+  response.body
+
+let load uri = 
+    if (Uri(uri).IsFile) then 
+        File.OpenRead uri :> Stream
+    else
+        loadHttp uri :> Stream
+
+let image file :Texture = 
+    use stream = load file
     use image = Image.Load<Rgb24> stream
     let pixels = image.SavePixelData()
     let width = image.Width

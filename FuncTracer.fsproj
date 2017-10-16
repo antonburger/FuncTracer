@@ -28,6 +28,7 @@
   <ItemGroup>
     <PackageReference Include="fparsec" Version="1.0.3" />
     <PackageReference Include="FSharp.Collections.ParallelSeq" Version="1.0.2" />
+    <PackageReference Include="Http.fs" Version="4.1.2" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0-*" />
   </ItemGroup>
 </Project>

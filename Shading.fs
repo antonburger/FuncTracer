@@ -19,6 +19,7 @@ let shadeOrBackground background shader = function
     | Some fragment -> shader fragment 
     | _ -> background 
 
+
 let softShadowLightIntensity direction samples scattering (intersectsScene: float -> Ray -> bool) origin =
     let intersectsInDirection d = intersectsScene System.Double.MaxValue { o = origin; d = d}
     let occludedSampleCount = 
@@ -74,6 +75,11 @@ let reflectionShader fragment =
     else
         Colour.Zero
 
+let shadeIfRequired shader fragment = 
+    if (fragment.intersection.material.applyLighting) then
+        shader fragment
+    else
+        fragment.intersection.material.colour
 let multiPartShader (shaders:Shader list) fragment = 
     shaders 
     |> Seq.sumBy (fun v->v fragment)
@@ -84,7 +90,7 @@ let getLightsOnPoint scene intersection =
     scene.lights |> 
     Seq.map (fun light -> 
         let (Light (lightConfig, colour)) = light
-        let intensity = shadowLightIntensity (intersectsAny scene) lightConfig shadowRayOrigin
+        let intensity = shadowLightIntensity (lightIsBocked scene) lightConfig shadowRayOrigin
         (scaleColour intensity colour, (lightDirection lightConfig intersection.p) );
     )
 

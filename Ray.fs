@@ -1,8 +1,13 @@
 module Ray
 open Colour
 
-type Material = { colour:Colour; reflectance: float; shineyness: float }
-let mattWhite = { colour=white; reflectance=0.0; shineyness= 0.0}
+type Material = { 
+    colour:Colour; 
+    reflectance: float; 
+    shineyness: float;
+    applyLighting: bool
+    }
+let mattWhite = { colour=white; reflectance=0.0; shineyness= 0.0; applyLighting=true}
 type Ray = { o: Point; d: Vector }
 
 let shiftOrigin distance ray = {ray with o=ray.o+distance*ray.d}
@@ -36,6 +41,8 @@ let rec private repeatLoop count f object objects=
         | _ -> objects
 
 let repeat count f object = repeatLoop count f object [object] |> group
+
+let ignoreLight (g:Geometry) = g >> Seq.map (fun i->{i with material = {i.material with applyLighting=false}})
 
 let setMaterial material object = object >> Seq.map (fun v-> {v with material=material})
 

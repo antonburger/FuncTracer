@@ -45,3 +45,10 @@ let intersectsAny ({ objects = objects }) maxDistance r =
     objects |>
     Seq.collect ( (fun v->v r)) |>
     Seq.exists (fun i -> i.t >= 0.0 && i.t < maxDistance)
+
+let lightIsBocked ({ objects = objects }) maxDistance r =
+    let flip f = fun x y -> f y x
+    objects |>
+    Seq.collect ( (fun v->v r)) |>
+    Seq.exists (fun i -> i.t >= 0.0 && i.t < maxDistance && i.material.applyLighting)
+

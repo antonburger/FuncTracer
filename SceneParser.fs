@@ -83,7 +83,7 @@ module Parsers =
 
     let pmaterial = 
         let factory colour reflectance shineyness = 
-            { colour=colour; reflectance=reflectance; shineyness=shineyness}
+            { mattWhite with colour=colour; reflectance=reflectance; shineyness=shineyness;}
         pipe3
             (pkeyword "diffuse" (pcolour .>> ws1))
             (pkeyword "reflectance" (pfloat .>> ws1))
@@ -197,6 +197,8 @@ module Parsers =
                 factory
         pkeyword "repeat" arguments
 
+    let ignoreLightFunction = skipStringCI "IgnoreLight" |>> (fun ()->ignoreLight)
+
     let (appliedFunction:Parser<Geometry,unit>) =
         binaryGeometryFunction "union"     Csg.union         <|>
         binaryGeometryFunction "subtract"  Csg.subtract      <|>
@@ -205,7 +207,7 @@ module Parsers =
         groupFunction<|>
         (applied geometryFunction geometry)
 
-    do geometryFunctionRef := textureGeometryFunction <|> hueShiftFunction <|> materialFunction <|> repeatFunction <|> scaleFunction <|> translateFunction <|> rotateFunction <|> (composed geometryFunction)
+    do geometryFunctionRef := ignoreLightFunction <|> textureGeometryFunction <|> hueShiftFunction <|> materialFunction <|> repeatFunction <|> scaleFunction <|> translateFunction <|> rotateFunction <|> (composed geometryFunction)
     do geometryRef :=  primitive <|> inBrackets appliedFunction 
 
     let pobject = 

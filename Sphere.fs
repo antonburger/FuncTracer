@@ -4,7 +4,7 @@ open Ray
 open Vector
 
 let private setUV r = 
-    let (Vector(dx, dy, dz)) = -r.n
+    let (Vector(dx, dy, dz)) = r.n
     let u = 0.5 + ((atan2 dz dx)/(2.0*System.Math.PI))
     let v = 0.5 - (asin dy)/System.Math.PI
     {r with uv = (u,v)}

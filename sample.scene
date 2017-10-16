@@ -1,9 +1,17 @@
-camera pos (0,3,-5) lookat (0,0,10) up (0,1,0) fov 60 ratio 1 
-samples 1 
+camera pos (0,3,-5) lookat (0,0,10) up (0,1,0) fov 60 ratio 1 focus (12,2)
+samples 1
 
-(material diffuse (0.0, 0.0, 0.0) reflectance 0.3 shineyness 30 
+#skybox
+(ignoreLight
+    (texture image "http://www.aversis.be/hdri/images/individual/ldr/017-weg-naast-wei-3.jpg"
+        (translate (0,3,-5) (scale 200 sphere))
+    )
+)
+
+(material diffuse (0.1, 0.1, 1.2) reflectance 0.2 shineyness 30 
     (translate (0,1,10) (scale (3,3,3) sphere )) 
 )
+
 (material diffuse (0.2, 0.8, 0) reflectance 0 shineyness 30 
     ((translate (-15,3,40)) . (scale (3,3,3) ) sphere ) 
 )
@@ -11,17 +19,19 @@ samples 1
     (translate (1,3,6)  sphere ) 
 )
 
-(texture (scale (0.1,0.1) grid (1,1,1) (0,0,0))
-    (translate (3,1,3)  sphere ) 
+(texture (scale (0.2, 0.2) grid (0,0,0) (1,1,1))
+    (material diffuse (0, 0, 0) reflectance 0.1 shineyness 30 
+        (translate (5,1,7)  sphere ) 
+    )
 )
 
 (material diffuse (0, 0, 0.5) reflectance 0 shineyness 0 
     (translate (-3,1,0)  sphere ) 
 )
 
-(texture (scale (5,1) (rotate 45 grid (1, 1, 0) (1,0,0)))
-    (translate (0,-1,0) plane)
-)
+#(texture (scale (5,1) (rotate 45 grid (1, 1, 0) (1,0,0)))
+#    (translate (0,-1,0) plane)
+#)
 
 softDirectional dir (1,-3,-3) samples 1 scatter 36 colour (0.5,0.5,0.5)
 softDirectional dir (-3,-2,3) samples 1 scatter 36 colour (1,1,1)

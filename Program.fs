@@ -61,7 +61,7 @@ let runTracer (timer:Diagnostics.Stopwatch, input:TextReader, output:Stream) =
     let defocusRays = options.camera.focus |> Option.map ImagePlane.depthOfFieldJitter |> Option.defaultValue id
     let pixelRays = List.map defocusRays pixelRays
     eprintfn "Generated rays: %ims" timer.ElapsedMilliseconds
-    let shader = multiPartShader [specularShader; reflectionShader; diffuseShader]
+    let shader = shadeIfRequired <| multiPartShader [specularShader; reflectionShader; diffuseShader]
     eprintfn "Created shader: %ims" timer.ElapsedMilliseconds
     let colours = shade shader scene pixelRays
     let pixelColours = samplingStrategy.blendPixels colours
