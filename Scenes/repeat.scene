@@ -17,6 +17,6 @@ samples 1
 
 softdirectional dir (2,-1,1) samples 1 scatter 5 colour (0.8,0.8,0.8)
 positional pos (0.5,2,3) falloff (1,1,1) colour (1,1,1)
-#directional dir (2,-1,1) colour (1,1,1)
+;directional dir (2,-1,1) colour (1,1,1)
 
-#directional dir (0,-0.001,1) colour (0.4,0.4,0.4)
+;directional dir (0,-0.001,1) colour (0.4,0.4,0.4)

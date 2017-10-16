@@ -28,7 +28,7 @@ module Parsers =
     let private anyWhitespace: Parser<unit,unit> = 
         skipMany ((skipAnyOf [| ' '; '\t' |]) <|> skipNewline) 
 
-    let private skipComment = skipChar '#' >>. skipRestOfLine true <?> "comment"
+    let private skipComment = skipChar ';' >>. skipRestOfLine true <?> "comment"
     let private skipTrivia = skipNewline <|> skipComment
     let private skipTrailingTrivia1 = skipMany1 skipTrivia
 
@@ -69,7 +69,25 @@ module Parsers =
         inBrackets numberList
         <??> "comma-separated list of 2 numbers in parens"
 
-    let pcolour = (ptriple) |>> (fun (r,g,b) -> Colour (r,g,b))
+    let private phexColour:Parser<Colour,unit> = 
+        let hexToByte (hex: char[]) = System.Byte.Parse(new System.String(hex),System.Globalization.NumberStyles.AllowHexSpecifier)
+        skipChar '#' >>. (manyMinMaxSatisfy 6 6 (fun (c:char)->true)
+            |>> (fun (str:string)->
+                    let arr = 
+                        str |> Seq.windowed 2 
+                        |> Seq.mapi (fun i x -> (i,x))
+                        |> Seq.filter (fun (i,_)->i%2=0)
+                        |> Seq.map snd
+                        |> Seq.map hexToByte
+                        |> Seq.map (fun v->float(v)/255.0)
+                        |> Seq.toArray
+                    Colour (arr.[0],arr.[1], arr.[2])
+            )
+        )
+
+    let pcolour = ((ptriple) |>> (fun (r,g,b) -> Colour (r,g,b)))
+                 <|> (pnumber |>> (fun x->Colour(x,x,x)))
+                 <|> phexColour
 
     let pfile:Parser<string,unit> = 
         let normalChar = satisfy (fun c -> c <> '"')
