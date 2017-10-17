@@ -1,5 +1,4 @@
-module Tests
-
+module Tests.Parser.Colour
 open System
 open Xunit
 open SceneParser
