@@ -14,6 +14,7 @@ open Scene
 open Transform
 open Csg
 open Ray
+open System.IO
 
 module Parsers =
     open Cube
@@ -112,7 +113,21 @@ module Parsers =
 
     let namedPrimitive name value = skipStringCI name |>> (fun()->value)
 
-    let primitive = namedPrimitive "circle" circle <|>
+    let mesh =          
+        let factory (file:string) = 
+            // TODO: Move this out of the parser?
+            match PlyParser.parse (new StreamReader(file):>TextReader) with 
+            | Result.Ok triangles -> 
+                printfn "Loaded %i triangles from %s" (triangles |> Seq.length) file
+                group triangles
+            | Result.Error message -> 
+                raise (System.Exception message)
+        let arguments = pfile |>> factory
+        pkeyword "mesh" arguments
+
+    let primitive =
+                    mesh <|>
+                    namedPrimitive "circle" circle <|>
                     namedPrimitive "square" square <|>
                     namedPrimitive "cube" cube <|>
                     namedPrimitive "sphere" sphere <|>
@@ -120,7 +135,6 @@ module Parsers =
                     namedPrimitive "cone" cone <|>
                     namedPrimitive "solidCylinder" solidCylinder <|>
                     namedPrimitive "cylinder" cylinder 
-
 
     let hueShiftFunction:Parser<Geometry->Geometry, unit> = 
         pkeyword "hueShift" (pfloat |>> hueShift)

@@ -19,8 +19,10 @@
     <Compile Include="Cone.fs" />
     <Compile Include="Cylinder.fs" />
     <Compile Include="Cube.fs" />
+    <Compile Include="Triangle.fs" />
     <Compile Include="Image.fs" />
     <Compile Include="Scene.fs" />
+    <Compile Include="PlyParser.fs" />
     <Compile Include="SceneParser.fs" />
     <Compile Include="Shading.fs" />
     <Compile Include="Program.fs" />

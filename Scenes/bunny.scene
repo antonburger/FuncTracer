@@ -1,0 +1,11 @@
+camera pos (0,2,-2) lookat (0,0,3) up (0,1,0) fov 60 ratio 1 
+samples 1
+
+;http://graphics.stanford.edu/pub/3Dscanrep/bunny.tar.gz
+(material diffuse 1 reflectance 0 shineyness 0 
+    (scale 10 (rotate (0,1,0) 180
+        mesh "..\stanford bunny\reconstruction\bun_zipper_res4.ply" 
+    ))
+)
+
+directional dir (-3,-2,3) colour (1,1,1)
