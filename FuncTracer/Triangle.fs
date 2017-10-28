@@ -3,9 +3,45 @@ open Ray
 open CommonTypes
 open CommonTypes.Vector
 
-let private ``Möller–Trumbore intersection algorithm`` triangle ray= 
+type Triangle = Triangle of Point*Point*Point
+
+let edgeIntersection p a b = 
+    let intersection = (Plane.intersect p { o=a; d= normalise (b-a) } |> Seq.first)
+    intersection.Value.p
+
+
+let private slice' plane (Triangle(a,b,c)) = //expects a on one side, b,c on the other
+    let intersection a b = edgeIntersection plane a b
+    let sliceSingle  = 
+        Seq.singleton (Triangle(a, intersection a b, intersection a c))
+    let sliceTwo  = 
+        [
+            (Triangle(intersection b a, b,c))
+            (Triangle(c,intersection c a, intersection b a))
+        ] |> List.toSeq
+    (sliceSingle, sliceTwo)
+
+let slice plane (Triangle(a,b,c)) =
+    let inline flip boolean x = 
+        if (boolean) then (snd x,fst x) else x
+    let aAbove = Plane.isAbove plane a
+    let bAbove = Plane.isAbove plane b
+    let cAbove = Plane.isAbove plane c
+    (
+    if (aAbove = bAbove && bAbove=cAbove) then 
+        (Seq.singleton (Triangle(a,b,c)),Seq.empty)
+    else
+        if (aAbove=bAbove) then 
+            slice' plane (Triangle(c,a,b)) |> flip true
+        else 
+            if (aAbove=cAbove) then 
+                slice' plane (Triangle(b,c,a)) |> flip true
+            else 
+                slice' plane (Triangle(a,b,c))
+    )|>flip (not aAbove)
+
+let private ``Möller–Trumbore intersection algorithm`` (Triangle(vertex0,vertex1,vertex2)) ray= 
     let epsilon= 0.0000001 
-    let (vertex0, vertex1, vertex2) = triangle
     let edge1 = vertex1 - vertex0
     let edge2 = vertex2 - vertex0
     let h = ray.d.**edge2
@@ -30,4 +66,4 @@ let private ``Möller–Trumbore intersection algorithm`` triangle ray=
                     Seq.empty
 
 
-let triangle a b c = ``Möller–Trumbore intersection algorithm`` (a,b,c) 
+let triangle = ``Möller–Trumbore intersection algorithm`` 

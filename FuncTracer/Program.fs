@@ -2,10 +2,6 @@
 open System.IO
 open Microsoft.FSharp.Control
 open Ray
-open Vector
-open Sphere
-open Plane
-open Light
 open Image
 open Scene
 open Shading
@@ -25,7 +21,7 @@ let duration f =
     let timer = System.Diagnostics.Stopwatch()
     timer.Start()
     let returnValue = f(timer)
-    eprintfn "Elapsed Time: %ims" timer.ElapsedMilliseconds
+    eprintfn "Elapsed Time: %A" timer.Elapsed
     returnValue    
 
 //let addGeometry scene = 
@@ -94,10 +90,11 @@ let getInputStream (args : string[]) : TextReader =
 
 [<EntryPoint>]
 let main (args) =
-    //printIntersectionAt (PixelCoord(220,220)) (file "house.scene")
+    //printIntersectionAt (PixelCoord(242,287)) (file "../Scenes/bunny.scene")
     //0
-    printfn "Arguments: %s" args.[0]
-    use input = getInputStream args
-    use output = getOutputStream args
-    duration (fun timer -> runTracer (timer, input, output))
+   printfn "Starting at %A" DateTime.Now
+   printfn "Arguments: %s" args.[0]
+   use input = getInputStream args
+   use output = getOutputStream args
+   duration (fun timer -> runTracer (timer, input, output))
     

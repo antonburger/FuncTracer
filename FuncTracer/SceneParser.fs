@@ -47,6 +47,8 @@ module Parsers =
     let private pnumber =
         numberLiteral numberOptions "number" |>> fun nl -> float nl.String
 
+    let pint =
+        numberLiteral NumberLiteralOptions.None "integer" |>> fun nl -> int nl.String
     let private pangle =
         pnumber |>> (fun v->Deg.toRad (v*1.0<deg>))
 
@@ -119,14 +121,29 @@ module Parsers =
             match PlyParser.parse (new StreamReader(file):>TextReader) with 
             | Result.Ok triangles -> 
                 printfn "Loaded %i triangles from %s" (triangles |> Seq.length) file
-                group triangles
+                triangles |> Seq.map (Triangle.triangle) |> group
             | Result.Error message -> 
                 raise (System.Exception message)
         let arguments = pfile |>> factory
         pkeyword "mesh" arguments
 
+    let bspMesh =          
+        let factory depth (file:string) = 
+            // TODO: Move this out of the parser?
+            match PlyParser.parse (new StreamReader(file):>TextReader) with 
+            | Result.Ok triangles -> 
+                printfn "Loaded %i triangles from %s" (triangles |> Seq.length) file
+                BspMesh.bspMesh false depth triangles 
+            | Result.Error message -> 
+                raise (System.Exception message)
+        let arguments = pipe2 
+                            (pint .>> ws1)
+                            pfile 
+                            factory
+        pkeyword "bspMesh" arguments
+
     let primitive =
-                    mesh <|>
+                    mesh <|> bspMesh <|>
                     namedPrimitive "circle" circle <|>
                     namedPrimitive "square" square <|>
                     namedPrimitive "cube" cube <|>

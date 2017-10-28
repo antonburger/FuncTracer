@@ -8,6 +8,7 @@ type Material = {
     applyLighting: bool
     }
 let mattWhite = { colour=white; reflectance=0.0; shineyness= 0.0; applyLighting=true}
+let mattRed = { colour=red; reflectance=0.0; shineyness= 0.0; applyLighting=true}
 type Ray = { o: Point; d: Vector }
 
 let shiftOrigin distance ray = {ray with o=ray.o+distance*ray.d}

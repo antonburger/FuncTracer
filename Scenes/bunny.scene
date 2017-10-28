@@ -3,8 +3,8 @@ samples 1
 
 ;http://graphics.stanford.edu/pub/3Dscanrep/bunny.tar.gz
 (material diffuse 1 reflectance 0 shineyness 0 
-    (scale 10 (rotate (0,1,0) 180
-        mesh "..\stanford bunny\reconstruction\bun_zipper_res4.ply" 
+    (scale 8 (rotate (0,1,0) 180
+        bspMesh 0 "..\stanford bunny\reconstruction\bun_zipper_res4.ply"
     ))
 )
 

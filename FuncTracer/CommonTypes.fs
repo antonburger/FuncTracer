@@ -18,6 +18,13 @@ type Vector = Vector of (float * float * float) with
         Vector (y1 * z2 - z1 * y2, x2 * z1 - z2 * x1, x1 * y2 - y1 * x2)
     member this.Length = this .* this |> sqrt
 
+    member this.x = match this with (Vector(x,y,z))  -> x
+    member this.y = match this with (Vector(x,y,z))  -> y
+    member this.z = match this with (Vector(x,y,z))  -> z
+
+
+
+
 type Point = Point of (float * float * float) with
     static member (+) (Point (px, py, pz), Vector (vx, vy, vz)) =
         Point (px + vx, py + vy, pz + vz)
@@ -26,6 +33,11 @@ type Point = Point of (float * float * float) with
     static member Zero = Point(0.0,0.0,0.0)
     static member (-) (Point (x1, y1, z1), Point (x2, y2, z2)) =
         Vector (x1 - x2, y1 - y2, z1 - z2)
+
+    member this.x = match this with (Point(x,y,z))  -> x
+    member this.y = match this with (Point(x,y,z))  -> y
+    member this.z = match this with (Point(x,y,z))  -> z
+
 
 type Colour = Colour of (float * float * float) with
     static member DivideByInt (Colour(r,g,b), i:int) = Colour(r/(float)i, g/(float)i, b/(float)i) 

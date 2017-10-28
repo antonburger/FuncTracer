@@ -14,7 +14,7 @@ type Header = {
 let private pint =
     numberLiteral NumberLiteralOptions.None "integer" |>> fun nl -> int nl.String
 let private pfloat =
-    let numberOptions = NumberLiteralOptions.AllowMinusSign ||| NumberLiteralOptions.AllowFraction
+    let numberOptions = NumberLiteralOptions.AllowMinusSign ||| NumberLiteralOptions.AllowFraction ||| NumberLiteralOptions.AllowExponent
     numberLiteral numberOptions "float" |>> fun nl -> float nl.String
 
 let magicNumber = skipString "ply" .>> skipNewline
@@ -54,8 +54,7 @@ let pface (vertexes:Point[]) =
        (pint .>> (skipChar ' '))
        (pint .>> (skipChar ' '))
        (pint .>> skipRestOfLine true)
-       (fun a b c -> triangle vertexes.[a] vertexes.[b] vertexes.[c])
-
+       (fun a b c -> (Triangle(vertexes.[a], vertexes.[b], vertexes.[c])))
 
 let pbody header = 
     let pfaces vertexes = parray header.faceCount (pface vertexes)

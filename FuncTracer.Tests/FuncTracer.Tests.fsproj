@@ -6,6 +6,8 @@
   <ItemGroup>
     <Compile Include="Parser/Colour.fs" />
     <Compile Include="Geometry/Sphere.fs" />
+    <Compile Include="Geometry/BoundingBox.fs" />
+    <Compile Include="Geometry/Triangle.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FSCheck" Version="2.10.3" />
