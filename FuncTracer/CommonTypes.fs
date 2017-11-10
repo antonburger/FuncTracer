@@ -71,6 +71,13 @@ module Vector =
 
     let reflect (n:Vector) (v:Vector) = v-(2.0*(v.*n)*n)
 
+    let angleBetween (a,b) =  
+        (normalise a) .* (normalise b) |> acos 
+ 
+    let perpendicularComponent a b =  
+        let na = normalise a  
+        b - (b.*na)*na 
+
 module Point =
     let toVector (Point (x, y, z)) =
         Vector (x, y, z)

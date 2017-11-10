@@ -35,6 +35,8 @@ module Parsers =
 
     let inBrackets (x:Parser<_, _>) = between (skipChar '(' >>. anyWhitespace) (anyWhitespace >>. skipChar ')') x
 
+    let defaultTo a parser = opt parser |>> (fun v->Option.defaultValue a v)
+
     let private numberOptions =
         NumberLiteralOptions.AllowFraction |||
         NumberLiteralOptions.AllowMinusSign |||
@@ -103,12 +105,17 @@ module Parsers =
             (fun a b -> a b)
 
     let pmaterial = 
-        let factory colour reflectance shineyness = 
-            { mattWhite with colour=colour; reflectance=reflectance; shineyness=shineyness;}
-        pipe3
-            (pkeyword "diffuse" (pcolour .>> ws1))
-            (pkeyword "reflectance" (pfloat .>> ws1))
-            (pkeyword "shineyness" pfloat)
+        let factory colour roughness reflectance shineyness = 
+            { mattWhite with colour=        colour; 
+                             reflectance=   reflectance; 
+                             shineyness=    shineyness;
+                             roughness=     roughness 
+                             }
+        pipe4
+            (defaultTo Colour.white (pkeyword "diffuse" (pcolour .>> ws1)))
+            (defaultTo 0.0 (pkeyword "roughness" (pfloat .>> ws1)))
+            (defaultTo 0.0 (pkeyword "reflectance" (pfloat .>> ws1)))
+            (defaultTo 0.0 (pkeyword "shineyness" pfloat))
             factory
 
     let geometry, geometryRef = createParserForwardedToRef<Geometry, unit>()
@@ -313,11 +320,11 @@ module Parsers =
         sepEndBy option skipTrailingTrivia1
 
     let pdirectional =
-        let factory dir colour = directional (Vector dir) (Colour colour)
+        let factory dir colour = directional (Vector dir) colour
         let directional =
             pipe2
                 (pkeyword "dir" (ptriple .>> ws1))
-                (pkeyword "colour" ptriple)
+                (pkeyword "colour" pcolour)
                 factory
         pkeyword "directional" directional
 

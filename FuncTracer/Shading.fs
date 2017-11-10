@@ -46,12 +46,35 @@ let lightDirection light atPoint =
         | SoftDirectional (v, _, _) -> v
         | Point (p, _) -> atPoint - p |> normalise
 
-let diffuseShader fragment =
+let roughDiffuse (fragment:Fragment) =  
+    // https://en.wikipedia.org/wiki/Oren%E2%80%93Nayar_reflectance_model
+    let lightColour,lightDirection = fragment.light 
+    let roughness = (fragment.intersection.material.roughness)**2.0 
+    let rayAngle = angleBetween (fragment.intersection.n, -fragment.viewRay.d) 
+    let lightAngle = angleBetween (fragment.intersection.n, -lightDirection) 
+    let alpha = max rayAngle lightAngle 
+    let beta = min rayAngle lightAngle 
+    let A = 1.0- 0.5*roughness/(roughness+0.33) 
+    let B = 0.45*roughness/(roughness+0.09) 
+    let tangentLight = perpendicularComponent fragment.intersection.n -lightDirection |> normalise 
+    let tangentRay = perpendicularComponent fragment.intersection.n -fragment.viewRay.d |> normalise 
+    let intensity = (cos lightAngle)*(A+(B* 
+        (max 0.0 (tangentLight.*tangentRay))*(sin alpha)*(tan beta) 
+        )) 
+    scaleColour intensity fragment.intersection.material.colour
+
+let lambertianDiffuse fragment = 
     let intersectedObject = fragment.intersection
     let normal = intersectedObject.n 
     let (lightColour, lightDirection)= fragment.light
     let intensity= (-lightDirection) .* normal
     scaleColour intensity (intersectedObject.material.colour * lightColour)
+
+let diffuseShader fragment =
+    if (fragment.intersection.material.roughness=0.0) then
+        lambertianDiffuse fragment
+    else
+        roughDiffuse fragment
 
 let specularShader fragment = 
     let intersectedObject = fragment.intersection
