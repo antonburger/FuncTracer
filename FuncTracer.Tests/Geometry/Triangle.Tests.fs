@@ -39,18 +39,16 @@ type TestTriangleSlice(output:ITestOutputHelper)=
 
     [<Fact>]
     member __.``Triangles above the plane are returned unchanged in fst`` () = 
-        let above = Triangle(
-            Point(-1.0,0.0,0.0), 
-            Point(-2.0,1.0,0.0), 
-            Point(-1.0,1.0,0.0)
-            )
+        let above = Triangle(   Point(-1.0,0.0,0.0), 
+                                Point(-2.0,1.0,0.0), 
+                                Point(-1.0,1.0,0.0)
+                                )
         slice plane above |> fst |> Seq.head |> equals above
 
     [<Fact>]
     member __.``Triangles below the plane are returned unchanged in snd`` () = 
-        let below = Triangle(
-            Point(1.0,0.0,0.0), 
-            Point(2.0,1.0,0.0), 
-            Point(1.0,1.0,0.0)
-            )
+        let below = Triangle(   Point(1.0,0.0,0.0), 
+                                Point(2.0,1.0,0.0), 
+                                Point(1.0,1.0,0.0)
+                                )
         slice plane below |> snd |> Seq.head |> equals below
