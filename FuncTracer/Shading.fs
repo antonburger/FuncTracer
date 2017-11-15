@@ -5,6 +5,7 @@ open Vector;
 open Light
 open Scene;
 open FSharp.Collections.ParallelSeq
+open Scene
 
 type Fragment  = {
     intersection: RayIntersection; 
@@ -107,18 +108,18 @@ let multiPartShader (shaders:Shader list) fragment =
     shaders 
     |> Seq.sumBy (fun v->v fragment)
 
-let getLightsOnPoint scene intersection =
+let getLightsOnPoint scene geometry intersection =
     // Project shadow rays from fractionally above the intersected point in order to avoid speckling from self-intersections.
     let shadowRayOrigin = intersection.p + 0.0001 * intersection.n
     scene.lights |> 
     Seq.map (fun light -> 
         let (Light (lightConfig, colour)) = light
-        let intensity = shadowLightIntensity (lightIsBocked scene) lightConfig shadowRayOrigin
+        let intensity = shadowLightIntensity (lightIsBocked geometry) lightConfig shadowRayOrigin
         (scaleColour intensity colour, (lightDirection lightConfig intersection.p) );
     )
 
-let createFragments getColourForDirection scene ray (intersection:RayIntersection) =
-    getLightsOnPoint scene intersection
+let createFragments getColourForDirection scene geometry ray (intersection:RayIntersection) =
+    getLightsOnPoint scene geometry intersection
     |> Seq.map (fun light ->
             {
             intersection= intersection;
@@ -129,18 +130,18 @@ let createFragments getColourForDirection scene ray (intersection:RayIntersectio
 
 let slightOffset (ray:Ray) = {o=ray.o + 0.0001 * ray.d; d=ray.d}
 
-let rec getColourForRay shader scene recursionLimit ray =
+let rec getColourForRay shader scene geometry recursionLimit ray =
     let getColourForDirection point direction= 
         if (recursionLimit<=0) then Colour.black else
-        getColourForRay shader scene (recursionLimit-1) {o=point; d=direction}
+        getColourForRay shader scene geometry (recursionLimit-1) {o=point; d=direction}
     slightOffset ray |>
-    intersectScene scene |>
-    Option.map (createFragments getColourForDirection scene ray) |>
+    intersectScene geometry |>
+    Option.map (createFragments getColourForDirection scene geometry ray) |>
     Option.defaultValue Seq.empty |>
     Seq.sumBy shader
 
-let shade (shader:Shader) scene (pixelRays : Ray seq) =
-    let shadeRay = getColourForRay shader scene 8
+let shade (shader:Shader) scene geometry (pixelRays : Ray seq) =
+    let shadeRay = getColourForRay shader scene geometry 8
     let chunks = Seq.chunkBySize 1000 pixelRays
     chunks
     |> PSeq.ordered

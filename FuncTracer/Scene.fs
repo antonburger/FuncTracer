@@ -32,7 +32,7 @@ let intersectPrimitive = function
 
 type SceneGraph = 
     | Primitive     of primitive: Primitive
-    | SceneFunction of SceneGraph*SceneFunction
+    | SceneFunction of SceneFunction*SceneGraph
     | Group         of nodes: SceneGraph list
     | Union         of SceneGraph*SceneGraph
     | Intersect     of SceneGraph*SceneGraph
@@ -64,7 +64,7 @@ with static member Default = {
         resolution = Resolution (400, 400);
     }
 
-let rec intersect (graph:SceneGraph) : Geometry = 
+let rec intersect scene = 
     let getTextureFunction texture = function
         | Scale (a,b)     -> Texture.scale (a,b) texture
         | Rotate angle    -> Texture.rotate angle texture
@@ -72,20 +72,36 @@ let rec intersect (graph:SceneGraph) : Geometry =
         | Image i         -> i
         | Grid (a,b)      -> Texture.grid a b
         | TextureFunction (texture,f) -> getTextureFunction (getTexture texture) f
-    let sceneFunction argument = function
-        | Transform     t -> transform t (intersect argument)
-        | Material      m -> Ray.setMaterial m (intersect argument)
-        | Texture       t -> textureDiffuse (getTexture t) (intersect argument)
-        | HueShift      a -> hueShift a (intersect argument)
-        | IgnoreLight     -> ignoreLight (intersect argument)
-    match graph with
-    | Primitive     p     -> intersectPrimitive p
-    | SceneFunction (a,b) -> sceneFunction a b
-    | Union         (a,b) -> Csg.union (intersect a) (intersect b)
-    | Subtract      (a,b) -> Csg.subtract (intersect a) (intersect b)
-    | Intersect     (a,b) -> Csg.intersect (intersect a) (intersect b)
-    | Exclude       (a,b) -> Csg.exclude (intersect a) (intersect b)
-    | Group         nodes -> Seq.map intersect (nodes) |> group
+    let sceneFunction:(SceneFunction->Geometry->Geometry) = function
+        | Transform     t -> transform t 
+        | Material      m -> setMaterial m 
+        | Texture       t -> textureDiffuse (getTexture t) 
+        | HueShift      a -> hueShift a 
+        | IgnoreLight     -> ignoreLight 
+    match scene with 
+        | Primitive     p     -> intersectPrimitive p
+        | SceneFunction (a,b) -> 
+            let b' = intersect b // 'let' required so that the entire tree is evaluated to a function before execution
+            b' |> sceneFunction a 
+        | Union         (a,b) -> 
+            let a' = intersect a
+            let b' = intersect b
+            Csg.union a' b'
+        | Subtract         (a,b) -> 
+            let a' = intersect a
+            let b' = intersect b
+            Csg.subtract a' b'
+        | Intersect         (a,b) -> 
+            let a' = intersect a
+            let b' = intersect b
+            Csg.intersect a' b'
+        | Exclude         (a,b) -> 
+            let a' = intersect a
+            let b' = intersect b
+            Csg.exclude a' b'
+        | Group         nodes -> 
+        let nodes' = Seq.map intersect (nodes) |> Seq.toList 
+        nodes' |> group
 
 
 type Scene = {
@@ -93,17 +109,13 @@ type Scene = {
     lights: Light list;
 }
 
-let sortByDistance = 
+let sortByDistance:(RayIntersection seq -> RayIntersection seq) = 
     let rayDistance = (fun r->r.t)
     Seq.sortBy rayDistance >>
     Seq.skipWhile (rayDistance >> (>) 0.0)
-
-let closest = sortByDistance >> Seq.tryHead
-
-let getAllIntersections ({ objects = objects }) = intersect objects 
-
-let intersectScene scene  = getAllIntersections scene >>  closest
-
-let lightIsBocked scene maxDistance =
+let closest:(RayIntersection seq -> RayIntersection option) = sortByDistance >> Seq.tryHead
+let sceneGeometry ({ objects = objects }) = intersect objects 
+let intersectScene geometry  = geometry >> closest
+let lightIsBocked geometry maxDistance =
     let flip f = fun x y -> f y x
-    (getAllIntersections scene)  >> Seq.exists (fun i -> i.t >= 0.0 && i.t < maxDistance && i.material.applyLighting)
+    geometry  >> Seq.exists (fun i -> i.t >= 0.0 && i.t < maxDistance && i.material.applyLighting)

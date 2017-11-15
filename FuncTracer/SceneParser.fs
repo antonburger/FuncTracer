@@ -153,9 +153,8 @@ module Parsers =
                     namedPrimitive "solidCylinder" SolidCylinder <|>
                     namedPrimitive "cylinder" Cylinder 
                     )|>>Primitive)
-
     let hueShiftFunction:Parser<SceneGraph->SceneGraph, unit> = 
-        let factory f g = SceneFunction (g,HueShift f)
+        let factory f g = SceneFunction (HueShift f,g)
         pkeyword "hueShift" (pfloat |>> factory)
 
     let texture, textureRef = createParserForwardedToRef<Texture, unit>()
@@ -187,26 +186,26 @@ module Parsers =
     do textureRef :=  gridTexture <|> imageTexture <|> appliedTextureFunction
 
     let textureGeometryFunction: Parser<SceneGraph->SceneGraph, unit> = 
-        let factory t g = SceneFunction (g, Texture t)
+        let factory t g = SceneFunction (Texture t,g)
         pkeyword "texture" (texture |>> factory)
 
     let scalefloat = 
         pnumber |>> (fun x->(x,x,x))
 
     let scaleFunction = 
-        let factory (x,y,z) g = SceneFunction (g, Transform (Transform.scale (x,y,z)))
+        let factory (x,y,z) g = SceneFunction (Transform (Transform.scale (x,y,z)),g)
         let arguments = 
                 ((ptriple <|> scalefloat) .>> ws1) |>> factory
         pkeyword "scale" arguments
 
     let materialFunction:Parser<SceneGraph->SceneGraph, unit> = 
-        let factory m g = SceneFunction (g,Material m)
+        let factory m g = SceneFunction (Material m,g)
         pkeyword "material" (pmaterial |>> factory)
 
     let rotateFunction = 
         let factory (x,y,z) angle g=
             let rotation = Transform.rotate (Vector (x,y,z)) (Deg.toRad (angle*1.0<deg>))
-            SceneFunction (g,Transform rotation)
+            SceneFunction (Transform rotation,g)
         let arguments = 
             pipe2
                 (ptriple .>> ws1)
@@ -215,7 +214,7 @@ module Parsers =
         pkeyword "rotate" arguments
 
     let translateFunction = 
-        let factory (x,y,z) g = SceneFunction (g,Transform (Transform.translate (Vector (x,y,z))))
+        let factory (x,y,z) g = SceneFunction (Transform (Transform.translate (Vector (x,y,z))),g)
         let arguments = 
                 ptriple |>> factory
         pkeyword "translate" arguments
@@ -251,7 +250,7 @@ module Parsers =
                 factory
         pkeyword "repeat" arguments
 
-    let ignoreLightFunction:Parser<SceneGraph->SceneGraph, unit> = skipStringCI "IgnoreLight" |>> (fun()->(fun g->SceneFunction (g, IgnoreLight)))
+    let ignoreLightFunction:Parser<SceneGraph->SceneGraph, unit> = skipStringCI "IgnoreLight" |>> (fun()->(fun g->SceneFunction (IgnoreLight,g)))
 
     let (appliedFunction:Parser<SceneGraph,unit>) =
         binaryGeometryFunction "union"     Union         <|>
