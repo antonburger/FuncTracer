@@ -59,11 +59,10 @@ let rec compile maxDepth (triangles:Triangle seq):BspNode=
         if (Seq.length left >= triCount || Seq.length right >= triCount) 
         then leaf
         else
-            Branch({
-            aabb=aabb;
-            left=compile (maxDepth-1) left;
-            right=compile (maxDepth-1) right
-            })
+            Branch({ aabb=aabb;
+                    left=compile (maxDepth-1) left;
+                    right=compile (maxDepth-1) right
+                    })
 
 let rec intersect showBoxes (tree:BspTree) ray: RayIntersection seq = 
     let inline intersectNode node:Geometry = 

@@ -1,19 +1,11 @@
 module SceneParser
-
 open System.IO
 open FParsec.CharParsers
 open FParsec.Primitives
 open Vector
-open Sphere
-open Cylinder
-open Cone
-open Plane
 open Light
 open Image
 open Scene
-open Transform
-open Csg
-open Ray
 open System.IO
 
 module Parsers =
@@ -106,7 +98,7 @@ module Parsers =
 
     let pmaterial = 
         let factory colour roughness reflectance shineyness = 
-            { mattWhite with colour=        colour; 
+            { Ray.mattWhite with colour=        colour; 
                              reflectance=   reflectance; 
                              shineyness=    shineyness;
                              roughness=     roughness 
@@ -118,17 +110,16 @@ module Parsers =
             (defaultTo 0.0 (pkeyword "shineyness" pfloat))
             factory
 
-    let geometry, geometryRef = createParserForwardedToRef<Geometry, unit>()
-
+    let geometry, geometryRef = createParserForwardedToRef<SceneGraph, unit>()
     let namedPrimitive name value = skipStringCI name |>> (fun()->value)
 
-    let mesh =          
+    let mesh:Parser<SceneGraph,unit> =          
         let factory (file:string) = 
             // TODO: Move this out of the parser?
             match PlyParser.parse (new StreamReader(file):>TextReader) with 
             | Result.Ok triangles -> 
                 printfn "Loaded %i triangles from %s" (triangles |> Seq.length) file
-                triangles |> Seq.map (Triangle.triangle) |> group
+                triangles |> Seq.map (fun t->Primitive (Triangle t)) |> Seq.toList |> Group
             | Result.Error message -> 
                 raise (System.Exception message)
         let arguments = pfile |>> factory
@@ -140,7 +131,7 @@ module Parsers =
             match PlyParser.parse (new StreamReader(file):>TextReader) with 
             | Result.Ok triangles -> 
                 printfn "Loaded %i triangles from %s" (triangles |> Seq.length) file
-                BspMesh.bspMesh false depth triangles 
+                BspMesh.bspMesh false depth triangles |> BspMesh
             | Result.Error message -> 
                 raise (System.Exception message)
         let arguments = pipe2 
@@ -150,62 +141,71 @@ module Parsers =
         pkeyword "bspMesh" arguments
 
     let primitive =
-                    mesh <|> bspMesh <|>
-                    namedPrimitive "circle" circle <|>
-                    namedPrimitive "square" square <|>
-                    namedPrimitive "cube" cube <|>
-                    namedPrimitive "sphere" sphere <|>
-                    namedPrimitive "plane" plane <|>
-                    namedPrimitive "cone" cone <|>
-                    namedPrimitive "solidCylinder" solidCylinder <|>
-                    namedPrimitive "cylinder" cylinder 
+                    mesh <|> 
+                    ((
+                    bspMesh <|>
+                    namedPrimitive "circle" Circle <|>
+                    namedPrimitive "square" Square <|>
+                    namedPrimitive "cube" Cube <|>
+                    namedPrimitive "sphere" Sphere <|>
+                    namedPrimitive "plane" Plane <|>
+                    namedPrimitive "cone" Cone <|>
+                    namedPrimitive "solidCylinder" SolidCylinder <|>
+                    namedPrimitive "cylinder" Cylinder 
+                    )|>>Primitive)
+    let hueShiftFunction:Parser<SceneGraph->SceneGraph, unit> = 
+        let factory f g = SceneFunction (HueShift f,g)
+        pkeyword "hueShift" (pfloat |>> factory)
 
-    let hueShiftFunction:Parser<Geometry->Geometry, unit> = 
-        pkeyword "hueShift" (pfloat |>> hueShift)
+    let texture, textureRef = createParserForwardedToRef<Texture, unit>()
 
-    let texture, textureRef = createParserForwardedToRef<Texture.Texture, unit>()
-
-    let gridTexture: Parser<Texture.Texture, unit> =
+    let gridTexture =
         let arguments = 
             pipe2
                 (pcolour .>> ws1)
                 pcolour 
-                Texture.grid
+                (fun a b -> Grid (a,b))
         pkeyword "grid" arguments
 
-    let imageTexture:Parser<Texture.Texture,unit> = 
-        let arguments = pfile |>> ImageTexture.image
+    let imageTexture:Parser<Texture,unit> = 
+        let arguments = pfile |>> (ImageTexture.image >> Image)
         pkeyword "image" arguments
 
-    let scaleTexture:Parser<Texture.Texture->Texture.Texture,unit> = 
-        pkeyword "scale" (ppair |>> Texture.scale)
+    let scaleTexture:Parser<Texture->Texture,unit> = 
+        let factory s t = TextureFunction (t,Scale s)
+        pkeyword "scale" (ppair |>> factory)
 
-    let rotateTexture:Parser<Texture.Texture->Texture.Texture,unit> = 
-        pkeyword "rotate" (pangle |>> Texture.rotate)
+    let rotateTexture:Parser<Texture->Texture,unit> = 
+        let factory a t= TextureFunction (t, Rotate a)
+        pkeyword "rotate" (pangle |>> factory)
 
     let textureFunction = scaleTexture <|> rotateTexture
 
-    do textureRef :=  gridTexture <|> imageTexture <|> inBrackets (applied textureFunction texture)
+    let appliedTextureFunction = inBrackets (applied textureFunction texture)
 
-    let textureGeometryFunction: Parser<Geometry->Geometry, unit> = 
-        pkeyword "texture" (texture |>> textureDiffuse)
+    do textureRef :=  gridTexture <|> imageTexture <|> appliedTextureFunction
+
+    let textureGeometryFunction: Parser<SceneGraph->SceneGraph, unit> = 
+        let factory t g = SceneFunction (Texture t,g)
+        pkeyword "texture" (texture |>> factory)
 
     let scalefloat = 
         pnumber |>> (fun x->(x,x,x))
 
     let scaleFunction = 
-        let factory (x,y,z) = transform (scale (x,y,z)) 
+        let factory (x,y,z) g = SceneFunction (Transform (Transform.scale (x,y,z)),g)
         let arguments = 
                 ((ptriple <|> scalefloat) .>> ws1) |>> factory
         pkeyword "scale" arguments
 
-    let materialFunction:Parser<Geometry->Geometry, unit> = 
-        pkeyword "material" (pmaterial |>> setMaterial)
+    let materialFunction:Parser<SceneGraph->SceneGraph, unit> = 
+        let factory m g = SceneFunction (Material m,g)
+        pkeyword "material" (pmaterial |>> factory)
 
     let rotateFunction = 
-        let factory (x,y,z) angle =
-            let rotation = rotate (Vector (x,y,z)) (Deg.toRad (angle*1.0<deg>))
-            transform rotation 
+        let factory (x,y,z) angle g=
+            let rotation = Transform.rotate (Vector (x,y,z)) (Deg.toRad (angle*1.0<deg>))
+            SceneFunction (Transform rotation,g)
         let arguments = 
             pipe2
                 (ptriple .>> ws1)
@@ -213,30 +213,25 @@ module Parsers =
                 factory
         pkeyword "rotate" arguments
 
-    let (translateFunction:Parser<Geometry->Geometry, unit>) = 
-        let factory (x,y,z) = Transform.transform (translate (Vector (x,y,z)))
+    let translateFunction = 
+        let factory (x,y,z) g = SceneFunction (Transform (Transform.translate (Vector (x,y,z))),g)
         let arguments = 
                 ptriple |>> factory
         pkeyword "translate" arguments
 
-    let binaryGeometryFunction keyword f = 
-        let factory object1 object2=
-            f object1 object2 
-        let objects =
-            pipe2
-                (geometry .>> ws1)
-                geometry
-                factory
+    let binaryGeometryFunction keyword (f: SceneGraph*SceneGraph->SceneGraph):Parser<SceneGraph,unit> = 
+        let factory object1 object2 =
+            f (object1,object2)
+        let objects:Parser<SceneGraph,unit> =
+                pipe2 (geometry .>> ws1) geometry factory
         pkeyword keyword objects 
 
     let groupFunction  = 
         let argument = many (geometry .>> anyWhitespace)
-        let factory arguments =
-            group (List.toSeq arguments)
-        let objects = argument |>> factory
+        let objects = argument |>> (fun items -> Group items)
         pkeyword "group" objects 
 
-    let geometryFunction, geometryFunctionRef = createParserForwardedToRef<Geometry->Geometry, unit>()
+    let geometryFunction, geometryFunctionRef = createParserForwardedToRef<SceneGraph->SceneGraph, unit>()
 
     let composed f =  // BUG: Doesn't work without the brackets 
         pipe2 
@@ -245,7 +240,9 @@ module Parsers =
             (>>)
 
     let repeatFunction = 
-        let factory count f = repeat count f
+        let rec factory count f g = 
+            if (count = 0) then f g
+            else factory (count-1) f (f g)
         let arguments = 
             pipe2
                 (pint32 .>> anyWhitespace)
@@ -253,13 +250,13 @@ module Parsers =
                 factory
         pkeyword "repeat" arguments
 
-    let ignoreLightFunction = skipStringCI "IgnoreLight" |>> (fun ()->ignoreLight)
+    let ignoreLightFunction:Parser<SceneGraph->SceneGraph, unit> = skipStringCI "IgnoreLight" |>> (fun()->(fun g->SceneFunction (IgnoreLight,g)))
 
-    let (appliedFunction:Parser<Geometry,unit>) =
-        binaryGeometryFunction "union"     Csg.union         <|>
-        binaryGeometryFunction "subtract"  Csg.subtract      <|>
-        binaryGeometryFunction "intersect" Csg.intersect     <|>
-        binaryGeometryFunction "exclude"   Csg.exclude       <|>
+    let (appliedFunction:Parser<SceneGraph,unit>) =
+        binaryGeometryFunction "union"     Union         <|>
+        binaryGeometryFunction "subtract"  Subtract      <|>
+        binaryGeometryFunction "intersect" Intersect     <|>
+        binaryGeometryFunction "exclude"   Exclude       <|>
         groupFunction<|>
         (applied geometryFunction geometry)
 
@@ -354,7 +351,7 @@ module Parsers =
         sepEndBy light skipTrailingTrivia1
 
     let pscenegraph =
-        let factory options objects lights = (options, { objects = objects; lights = lights })
+        let factory options objects lights = (options, { objects = Group objects; lights = lights })
         let skipLeadingTrivia = skipMany skipTrivia
         // BUG: within options, objects or lights, separate objects must be (correctly) newline-separated. But between sections, no newline is required - can run a line on straight from "camera" to "sphere", for instance. Would like to correct this in a way that doesn't *require* newline at EOF.
         let content = pipe3 poptions pobjects plights factory

@@ -34,20 +34,19 @@ let printIntersectionAt pixel source =
     let (options, scene) = readScene source
     let imagePlane = ImagePlane.create options.camera options.resolution
     let ray=ImagePlane.rayThroughPixel imagePlane pixel (Jitter.JitterOffset (0.0, 0.0))
-    let intersection = intersectScene scene ray
+    let geometry = sceneGeometry scene
+    eprintfn "Finished building intersection function"
+    let intersection = intersectScene geometry ray
     eprintfn "intersection:"
     eprintfn "%A" intersection
     eprintfn "material:"
     eprintfn "%A" intersection.Value.material
 
-    let reversedRay={d=(-ray.d); o=intersection.Value.p}
-    eprintfn "Reversed Intersection:"
-    let reversedIntersection = intersectScene scene (slightOffset reversedRay)
-    eprintfn "%A" reversedIntersection
+    let intersection = intersectScene geometry ray
+    eprintfn "intersection:"
+    eprintfn "%A" intersection
     eprintfn "material:"
-    eprintfn "%A" reversedIntersection.Value.material
-
-
+    eprintfn "%A" intersection.Value.material
 
 let runTracer (timer:Diagnostics.Stopwatch, input:TextReader, output:Stream) = 
     let (options, scene) = readScene input
@@ -59,7 +58,9 @@ let runTracer (timer:Diagnostics.Stopwatch, input:TextReader, output:Stream) =
     eprintfn "Generated rays: %ims" timer.ElapsedMilliseconds
     let shader = shadeIfRequired <| multiPartShader [specularShader; reflectionShader; diffuseShader]
     eprintfn "Created shader: %ims" timer.ElapsedMilliseconds
-    let colours = shade shader scene pixelRays
+    let geometry = sceneGeometry scene
+    eprintfn "Geometry created"
+    let colours = shade shader scene geometry pixelRays
     let pixelColours = samplingStrategy.blendPixels colours
     eprintfn "Shaded scene %ims" timer.ElapsedMilliseconds
     let bitmap = { resolution = options.resolution; pixels = Seq.toList << Seq.map snd <| pixelColours }
@@ -90,8 +91,8 @@ let getInputStream (args : string[]) : TextReader =
 
 [<EntryPoint>]
 let main (args) =
-    //printIntersectionAt (PixelCoord(242,287)) (file "../Scenes/bunny.scene")
-    //0
+   // printIntersectionAt (PixelCoord(242,287)) (file "Scenes/bunny.scene")
+   // 0
    printfn "Starting at %A" DateTime.Now
    printfn "Arguments: %s" args.[0]
    use input = getInputStream args
