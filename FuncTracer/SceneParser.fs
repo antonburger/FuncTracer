@@ -142,16 +142,15 @@ module Parsers =
 
     let primitive =
                     mesh <|> 
-                    ((
-                    bspMesh <|>
-                    namedPrimitive "circle" Circle <|>
-                    namedPrimitive "square" Square <|>
-                    namedPrimitive "cube" Cube <|>
-                    namedPrimitive "sphere" Sphere <|>
-                    namedPrimitive "plane" Plane <|>
-                    namedPrimitive "cone" Cone <|>
-                    namedPrimitive "solidCylinder" SolidCylinder <|>
-                    namedPrimitive "cylinder" Cylinder 
+                    ((  bspMesh <|>
+                        namedPrimitive "circle" Circle <|>
+                        namedPrimitive "square" Square <|>
+                        namedPrimitive "cube" Cube <|>
+                        namedPrimitive "sphere" Sphere <|>
+                        namedPrimitive "plane" Plane <|>
+                        namedPrimitive "cone" Cone <|>
+                        namedPrimitive "solidCylinder" SolidCylinder <|>
+                        namedPrimitive "cylinder" Cylinder 
                     )|>>Primitive)
     let hueShiftFunction:Parser<SceneGraph->SceneGraph, unit> = 
         let factory f g = SceneFunction (HueShift f,g)
@@ -239,16 +238,17 @@ module Parsers =
             (inBrackets f)
             (>>)
 
-    let repeatFunction = 
-        let rec factory count f g = 
-            if (count = 0) then f g
-            else factory (count-1) f (f g)
+    let repeatFunction:Parser<SceneGraph->SceneGraph, unit> = 
+        let rec factory count f (g:SceneGraph) = 
+            if (count = 0) then [f g]
+            else f g :: factory (count-1) f (f g)
+        
         let arguments = 
             pipe2
                 (pint32 .>> anyWhitespace)
                 (geometryFunction .>> anyWhitespace)
-                factory
-        pkeyword "repeat" arguments
+                factory 
+        pkeyword "repeat" arguments |>> (fun l -> l>> Group)
 
     let ignoreLightFunction:Parser<SceneGraph->SceneGraph, unit> = skipStringCI "IgnoreLight" |>> (fun()->(fun g->SceneFunction (IgnoreLight,g)))
 

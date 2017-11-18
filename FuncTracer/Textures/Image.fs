@@ -16,7 +16,7 @@ let load uri =
     if (Uri(uri).IsFile) then 
         File.OpenRead uri :> Stream
     else
-        loadHttp uri :> Stream
+        loadHttp uri
 
 let image file :Texture = 
     use stream = load file

@@ -59,9 +59,7 @@ let roughDiffuse (fragment:Fragment) =
     let B = 0.45*roughness/(roughness+0.09) 
     let tangentLight = perpendicularComponent fragment.intersection.n -lightDirection |> normalise 
     let tangentRay = perpendicularComponent fragment.intersection.n -fragment.viewRay.d |> normalise 
-    let intensity = (cos lightAngle)*(A+(B* 
-        (max 0.0 (tangentLight.*tangentRay))*(sin alpha)*(tan beta) 
-        )) 
+    let intensity = (cos lightAngle)*(A+(B* (max 0.0 (tangentLight.*tangentRay))*(sin alpha)*(tan beta) )) 
     scaleColour intensity fragment.intersection.material.colour
 
 let lambertianDiffuse fragment = 
